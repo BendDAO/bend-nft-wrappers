@@ -12,11 +12,16 @@ import {IERC721Wrapper} from "../interfaces/IERC721Wrapper.sol";
 import {IWrapperValidator} from "../interfaces/IWrapperValidator.sol";
 import {IFlashLoanReceiver} from "../interfaces/IFlashLoanReceiver.sol";
 import {IMoonbirds} from "./IMoonbirds.sol";
+import {MoonbirdsUserProxy} from "./MoonbirdsUserProxy.sol";
 
 contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, ReentrancyGuard, ERC721 {
+    event MoonbirdsUserProxyRegistered(address user, address proxy);
+
     IERC721Metadata public immutable override underlyingToken;
     IWrapperValidator public override validator;
     IMoonbirds public immutable moonbirds;
+    // Mapping from user address to proxy address
+    mapping(address => address) private _userProxies;
 
     constructor(
         IERC721Metadata underlyingToken_,
@@ -55,21 +60,23 @@ contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, Reentranc
     }
 
     function mint(uint256 tokenId) external override nonReentrant {
-        address owner = underlyingToken.ownerOf(tokenId);
-        require(_msgSender() == owner, "MoonbirdsWrapper: only owner can mint");
         require(validator.isValid(address(underlyingToken), tokenId), "MoonbirdsWrapper: token id not valid");
 
-        moonbirds.safeTransferWhileNesting(_msgSender(), address(this), tokenId);
+        MoonbirdsUserProxy proxy = MoonbirdsUserProxy(_userProxies[_msgSender()]);
+        proxy.transfer(tokenId);
+        require(address(this) == underlyingToken.ownerOf(tokenId), "MoonbirdsWrapper: proxy transfer failed");
+
         _mint(_msgSender(), tokenId);
     }
 
     function burn(uint256 tokenId) external override nonReentrant {
         require(_msgSender() == ownerOf(tokenId), "MoonbirdsWrapper: only owner can burn");
-        address owner = underlyingToken.ownerOf(tokenId);
-        require(address(this) == owner, "MoonbirdsWrapper: invalid tokenId");
+
+        require(address(this) == underlyingToken.ownerOf(tokenId), "MoonbirdsWrapper: invalid token owner");
+
+        _burn(tokenId);
 
         moonbirds.safeTransferWhileNesting(address(this), _msgSender(), tokenId);
-        _burn(tokenId);
     }
 
     function flashLoan(
@@ -114,5 +121,27 @@ contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, Reentranc
 
     function tokenURI(uint256 tokenId) public view override(IERC721Metadata, ERC721) returns (string memory) {
         return underlyingToken.tokenURI(tokenId);
+    }
+
+    /**
+     * @dev Registers user proxy
+     */
+    function registerUserProxy() public {
+        address sender = _msgSender();
+
+        require(_userProxies[sender] == address(0), "MoonbirdsWrapper: caller has registered the proxy");
+
+        address proxy = address(new MoonbirdsUserProxy(address(moonbirds)));
+
+        _userProxies[sender] = proxy;
+
+        emit MoonbirdsUserProxyRegistered(sender, proxy);
+    }
+
+    /**
+     * @dev Gets user proxy address
+     */
+    function getUserProxy(address user) public view returns (address) {
+        return _userProxies[user];
     }
 }
