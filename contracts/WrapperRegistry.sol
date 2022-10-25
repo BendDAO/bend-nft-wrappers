@@ -17,15 +17,15 @@ contract WrapperRegistry is IWrapperRegistry, Ownable, ReentrancyGuard {
 
     mapping(address => EnumerableSet.AddressSet) private _wrappers;
 
-    function createWrapper(address collection, address validator)
-        external
-        override
-        onlyOwner
-        returns (address wrapper)
-    {
+    function createWrapper(
+        address collection,
+        address validator,
+        string memory name,
+        string memory symbol
+    ) external override onlyOwner returns (address wrapper) {
         require(collection != address(0), "WrapperRegistry: collection can't be zero address");
         require(validator != address(0), "WrapperRegistry: validator can't be zero address");
-        wrapper = address(new ERC721Wrapper(IERC721Metadata(collection), IWrapperValidator(validator)));
+        wrapper = address(new ERC721Wrapper(IERC721Metadata(collection), IWrapperValidator(validator), name, symbol));
         emit WrapperCreated(wrapper, collection, validator);
     }
 

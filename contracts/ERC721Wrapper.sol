@@ -16,9 +16,12 @@ contract ERC721Wrapper is IERC721Wrapper, IERC721Receiver, Ownable, ReentrancyGu
     IERC721Metadata public immutable override underlyingToken;
     IWrapperValidator public override validator;
 
-    constructor(IERC721Metadata underlyingToken_, IWrapperValidator validator_)
-        ERC721(underlyingToken_.name(), underlyingToken_.symbol())
-    {
+    constructor(
+        IERC721Metadata underlyingToken_,
+        IWrapperValidator validator_,
+        string memory name,
+        string memory symbol
+    ) ERC721(name, symbol) {
         require(validator_.underlyingToken() == underlyingToken_, "Validator: underlying token mismatch");
         underlyingToken = underlyingToken_;
         validator = validator_;

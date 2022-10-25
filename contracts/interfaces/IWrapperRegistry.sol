@@ -6,7 +6,12 @@ interface IWrapperRegistry {
     event WrapperRegistered(address indexed wrapper);
     event WrapperUnregistered(address indexed wrapper);
 
-    function createWrapper(address collection, address validator) external returns (address wrapper);
+    function createWrapper(
+        address collection,
+        address validator,
+        string memory name,
+        string memory symbol
+    ) external returns (address wrapper);
 
     function registerWrapper(address wrapper) external;
 
