@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -15,11 +16,14 @@ import {IMoonbirds} from "./IMoonbirds.sol";
 import {MoonbirdsUserProxy} from "./MoonbirdsUserProxy.sol";
 
 contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, ReentrancyGuard, ERC721 {
+    using Clones for address;
+
     event MoonbirdsUserProxyRegistered(address user, address proxy);
 
     IERC721Metadata public immutable override underlyingToken;
     IWrapperValidator public override validator;
     IMoonbirds public immutable moonbirds;
+    address public immutable userProxyImplemention;
     // Mapping from user address to proxy address
     mapping(address => address) private _userProxies;
 
@@ -33,6 +37,7 @@ contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, Reentranc
         underlyingToken = underlyingToken_;
         validator = validator_;
         moonbirds = IMoonbirds(address(underlyingToken_));
+        userProxyImplemention = address(new MoonbirdsUserProxy());
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, IERC165) returns (bool) {
@@ -131,7 +136,8 @@ contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, Reentranc
 
         require(_userProxies[sender] == address(0), "MoonbirdsWrapper: caller has registered the proxy");
 
-        address proxy = address(new MoonbirdsUserProxy(address(moonbirds)));
+        address proxy = userProxyImplemention.clone();
+        MoonbirdsUserProxy(proxy).initialize(address(this), address(moonbirds));
 
         _userProxies[sender] = proxy;
 
