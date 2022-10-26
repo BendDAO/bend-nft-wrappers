@@ -32,6 +32,9 @@ export interface Contracts {
   wrapperRegistry: WrapperRegistry;
   mockFlashLoanReceiver: MockFlashLoanReceiver;
 
+  commonERC721: MintableERC721;
+  commonValidator: BitmapValidator;
+
   mockOtherdeed: MintableERC721;
   kodaValidator: BitmapValidator;
   kodaWrapper: ERC721Wrapper;
@@ -60,6 +63,10 @@ export async function setupContracts(): Promise<Contracts> {
 
   // config
   const moonbirdParams = getParams(Moonbirds, networkName);
+
+  // Common ERC721
+  const commonERC721 = await (await ethers.getContractFactory("MintableERC721")).deploy("MOCK ERC721", "MOCK");
+  const commonValidator = await (await ethers.getContractFactory("BitmapValidator")).deploy(commonERC721.address, []);
 
   // registry
   const wrapperRegistryFactory = await ethers.getContractFactory("WrapperRegistry");
@@ -108,6 +115,9 @@ export async function setupContracts(): Promise<Contracts> {
 
     wrapperRegistry,
     mockFlashLoanReceiver,
+
+    commonERC721,
+    commonValidator,
 
     mockOtherdeed,
     kodaValidator,

@@ -28,6 +28,7 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     ).deploy(contracts.mockOtherdeed.address, []);
 
     await waitForTx(await contracts.kodaWrapper.connect(env.admin).updateValidator(validatorV2.address));
+
     const validatorAfter = await contracts.kodaWrapper.validator();
     expect(validatorAfter).to.be.eq(validatorV2.address);
 
