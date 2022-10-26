@@ -65,9 +65,9 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     const birdOwnerBefore = await contracts.mockMoonbirds.ownerOf(birdIdWithoutNesting);
 
     // mint
-    await expect(
-      contracts.moonbirdsWrapper.connect(user0).mint(birdIdWithoutNesting)
-    ).to.be.revertedWith("MoonbirdsWrapper: token id not valid");
+    await expect(contracts.moonbirdsWrapper.connect(user0).mint(birdIdWithoutNesting)).to.be.revertedWith(
+      "MoonbirdsWrapper: token id not valid"
+    );
 
     const birdOwnerAfter = await contracts.mockMoonbirds.ownerOf(birdIdWithoutNesting);
     expect(birdOwnerAfter).to.be.eq(birdOwnerBefore);

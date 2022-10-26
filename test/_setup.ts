@@ -15,6 +15,7 @@ import { waitForTx } from "../tasks/utils/helpers";
 import { constants } from "ethers";
 import { MockMoonbirds } from "../typechain-types/contracts/mocks";
 import { MockMoonbirdsFlashLoanReceiver } from "../typechain-types/contracts/mocks/MockMoonbirdsFlashLoanReceiver";
+import { MockFlashLoanReceiver } from "../typechain-types/contracts/mocks/MockFlashLoanReceiver";
 
 export interface Env {
   initialized: boolean;
@@ -29,8 +30,9 @@ export interface Contracts {
 
   // wrappers
   wrapperRegistry: WrapperRegistry;
+  mockFlashLoanReceiver: MockFlashLoanReceiver;
 
-  otherdeed: MintableERC721;
+  mockOtherdeed: MintableERC721;
   kodaValidator: BitmapValidator;
   kodaWrapper: ERC721Wrapper;
 
@@ -63,16 +65,19 @@ export async function setupContracts(): Promise<Contracts> {
   const wrapperRegistryFactory = await ethers.getContractFactory("WrapperRegistry");
   const wrapperRegistry = await wrapperRegistryFactory.deploy();
 
+  const flashLoanReceiverFactory = await ethers.getContractFactory("MockFlashLoanReceiver");
+  const mockFlashLoanReceiver = await flashLoanReceiverFactory.deploy();
+
   // Koda wrapper
   const otherdeedFactory = await ethers.getContractFactory("MintableERC721");
-  const otherdeed = await otherdeedFactory.deploy("MockOtherdeed", "LAND");
+  const mockOtherdeed = await otherdeedFactory.deploy("MockOtherdeed", "LAND");
 
   const kodaValidatorFactory = await ethers.getContractFactory("BitmapValidator");
-  const kodaValidator = await kodaValidatorFactory.deploy(otherdeed.address, []);
+  const kodaValidator = await kodaValidatorFactory.deploy(mockOtherdeed.address, []);
 
-  const kodaWrapperFactory = await ethers.getContractFactory("MoonbirdsWrapper");
+  const kodaWrapperFactory = await ethers.getContractFactory("ERC721Wrapper");
   const kodaWrapper = await kodaWrapperFactory.deploy(
-    otherdeed.address,
+    mockOtherdeed.address,
     kodaValidator.address,
     "Otherdeed Koda Wrapper",
     "WKODA"
@@ -102,8 +107,9 @@ export async function setupContracts(): Promise<Contracts> {
     initialized: true,
 
     wrapperRegistry,
+    mockFlashLoanReceiver,
 
-    otherdeed,
+    mockOtherdeed,
     kodaValidator,
     kodaWrapper,
 
