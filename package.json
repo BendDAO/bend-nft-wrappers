@@ -1,7 +1,7 @@
 {
-  "name": "@benddao/downpayment",
+  "name": "@benddao/bend-nft-wrappers",
   "version": "1.0.0",
-  "description": "Bend downpayment smart",
+  "description": "BendDAO NFT Wrappers",
   "author": "BendDAO",
   "private": false,
   "files": [
@@ -37,7 +37,7 @@
     "lint:sol": "solhint  'contracts/**/*.sol'",
     "lint:ts": "eslint '**/*.{js,jsx,ts,tsx}'",
     "prepare": "husky install",
-    "test": "hardhat test",
+    "test": "npm run compile && hardhat test",
     "test:gas": "REPORT_GAS=true hardhat test",
     "test:coverage": "TS_NODE_TRANSPILE_ONLY=true hardhat coverage && hardhat compile --force",
     "release": "release-it"

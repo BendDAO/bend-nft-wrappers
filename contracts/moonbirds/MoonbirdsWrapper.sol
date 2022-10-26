@@ -47,10 +47,12 @@ contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, Reentranc
     function onERC721Received(
         address,
         address,
-        uint256,
+        uint256 tokenId,
         bytes memory
     ) public virtual override returns (bytes4) {
         require(_msgSender() == address(underlyingToken), "MoonbirdsWrapper: not acceptable erc721");
+        (bool nesting, , ) = moonbirds.nestingPeriod(tokenId);
+        require(nesting, "MoonbirdsWrapper: only support birds in nesting");
         return IERC721Receiver.onERC721Received.selector;
     }
 
