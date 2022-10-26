@@ -11,9 +11,7 @@ contract MoonbirdsValidator is IWrapperValidator, Ownable {
     IERC721Metadata public immutable override underlyingToken;
     IMoonbirds public immutable moonbirds;
 
-    constructor(address underlyingToken_, uint256[] memory data_) {
-        data_;
-
+    constructor(address underlyingToken_) {
         underlyingToken = IERC721Metadata(underlyingToken_);
         moonbirds = IMoonbirds(address(underlyingToken_));
     }
