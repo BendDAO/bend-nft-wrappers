@@ -41,16 +41,31 @@ contract WrapperRegistry is IWrapperRegistry, Ownable, ReentrancyGuard {
         emit WrapperUnregistered(wrapper);
     }
 
-    function findWrapper(address collection, uint256 tokenId) external view override returns (address wrapper) {
+    function findWrappers(address collection, uint256 tokenId)
+        external
+        view
+        override
+        returns (address[] memory wrappers)
+    {
         EnumerableSet.AddressSet storage collectionWrappers = _wrappers[collection];
+        address[] memory tmpWrappers = new address[](collectionWrappers.length());
+        uint256 retNum = 0;
         for (uint256 i = 0; i < collectionWrappers.length(); i++) {
-            require(wrapper == address(0), "WrapperRegistry: multi wrappers found");
             address _wrapper = collectionWrappers.at(i);
             if (IERC721Wrapper(_wrapper).validator().isValid(collection, tokenId)) {
-                wrapper = _wrapper;
+                tmpWrappers[retNum] = _wrapper;
+                retNum++;
             }
         }
-        require(wrapper != address(0), "WrapperRegistry: no wrapper found");
+
+        if (collectionWrappers.length() == retNum) {
+            return tmpWrappers;
+        }
+
+        wrappers = new address[](retNum);
+        for (uint256 i = 0; i < retNum; i++) {
+            wrappers[i] = tmpWrappers[i];
+        }
     }
 
     function updateValidator(address wrapper, address validator) external override onlyOwner {

@@ -8,10 +8,13 @@ import { Contracts, Env, makeSuite } from "./_setup";
 
 makeSuite("WrapperRegistry", (contracts: Contracts, env: Env) => {
   let tokenIdTracker: number;
+  let tokenId1: number;
   let testWrapper: ERC721Wrapper;
 
   before(async () => {
     tokenIdTracker = 0;
+
+    tokenId1 = ++tokenIdTracker;
   });
 
   it("Create wrapper", async () => {
@@ -71,12 +74,12 @@ makeSuite("WrapperRegistry", (contracts: Contracts, env: Env) => {
     );
   });
 
-  it("Config validato and find wrapper by token idr", async () => {
-    const tokenId1 = ++tokenIdTracker;
+  it("Config validator and find wrapper by token idr", async () => {
     await waitForTx(await contracts.commonValidator.connect(env.admin).enableTokenIds([tokenId1]));
 
-    const wrapperFound1 = await contracts.wrapperRegistry.findWrapper(contracts.commonERC721.address, tokenId1);
-    expect(wrapperFound1).to.be.eq(testWrapper.address);
+    const retWrappers = await contracts.wrapperRegistry.findWrappers(contracts.commonERC721.address, tokenId1);
+    expect(retWrappers.length).to.be.eq(1);
+    expect(retWrappers[0]).to.be.eq(testWrapper.address);
   });
 
   it("Unregister wrapper", async () => {
@@ -88,5 +91,8 @@ makeSuite("WrapperRegistry", (contracts: Contracts, env: Env) => {
 
     const wrapperCount2 = await contracts.wrapperRegistry.viewCollectionWrapperCount(contracts.commonERC721.address);
     expect(wrapperCount2).to.be.eq(0);
+
+    const retWrappers = await contracts.wrapperRegistry.findWrappers(contracts.commonERC721.address, tokenId1);
+    expect(retWrappers.length).to.be.eq(0);
   });
 });
