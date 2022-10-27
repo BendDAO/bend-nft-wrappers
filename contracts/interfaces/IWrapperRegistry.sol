@@ -17,7 +17,7 @@ interface IWrapperRegistry {
 
     function unregisterWrapper(address wrapper) external;
 
-    function findWrapper(address collection, uint256 tokenId) external returns (address wrapper);
+    function findWrappers(address collection, uint256 tokenId) external returns (address[] memory wrapper);
 
     function updateValidator(address wrapper, address validator) external;
 
