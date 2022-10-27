@@ -31,3 +31,18 @@ export const NETWORKS_RPC_URL: Params<string> = {
     ? `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`
     : `https://mainnet.infura.io/v3/${INFURA_KEY}`,
 };
+
+export const Moonbirds: Params<string> = {
+  [Network.goerli]: "0x784e3fcfc86f7806f52a24571d8534c916c8c609",
+  [Network.mainnet]: "0x23581767a106ae21c074b2276D25e5C3e136a68b",
+};
+
+export const Otherdeed: Params<string> = {
+  [Network.goerli]: "",
+  [Network.mainnet]: "0x34d85c9CDeB23FA97cb08333b511ac86E1C4E258",
+};
+
+export const MAYC: Params<string> = {
+  [Network.goerli]: "0x15596c27900e12a9cfc301248e21888751f61c19",
+  [Network.mainnet]: "0x60E4d786628Fea6478F785A6d7e704777c86a7c6",
+};
