@@ -1,4 +1,4 @@
-[![Build pass](https://github.com/BendDAO/bend-nft-wrappers/actions/workflows/tests.yaml/badge.svg)](https://github.com/BendDAO/bend-nft-wrappers/actions/workflows/tests.js.yml)
+[![Build pass](https://github.com/BendDAO/bend-nft-wrappers/actions/workflows/tests.yaml/badge.svg)](https://github.com/BendDAO/bend-nft-wrappers/actions/workflows/tests.yaml)
 [![codecov](https://codecov.io/gh/BendDAO/bend-nft-wrappers/branch/main/graph/badge.svg?token=5WSasrwsSa)](https://codecov.io/gh/BendDAO/bend-nft-wrappers)
 
 ```
