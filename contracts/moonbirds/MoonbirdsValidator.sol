@@ -9,16 +9,14 @@ import {IMoonbirds} from "./IMoonbirds.sol";
 
 contract MoonbirdsValidator is IWrapperValidator, Ownable {
     IERC721Metadata public immutable override underlyingToken;
-    IMoonbirds public immutable moonbirds;
 
     constructor(address underlyingToken_) {
         underlyingToken = IERC721Metadata(underlyingToken_);
-        moonbirds = IMoonbirds(address(underlyingToken_));
     }
 
     function isValid(address collection, uint256 tokenId) external view returns (bool) {
         require(collection == address(underlyingToken), "MoonbirdsValidator: collection mismatch");
-        (bool nesting, , ) = moonbirds.nestingPeriod(tokenId);
+        (bool nesting, , ) = IMoonbirds(address(underlyingToken)).nestingPeriod(tokenId);
         return nesting;
     }
 }

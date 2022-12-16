@@ -4,6 +4,7 @@ import { getParams, MAYC, Moonbirds, Otherdeed } from "./config";
 import { IWrapperRegistry } from "../typechain-types";
 import {
   deployContract,
+  deployContractWithID,
   deployProxyContract,
   getContractAddressFromDB,
   getContractFromDB,
@@ -60,9 +61,6 @@ task("deploy:otherdeed-koda", "Deploy koda wrapper").setAction(async (_, { netwo
   }
 
   const kodaBitMapData: BigNumberish[] = [];
-  if (kodaBitMapData === undefined || kodaBitMapData.length === 0) {
-    throw Error("invalid kodaBitMapData address");
-  }
 
   const registry = await getContractFromDB("WrapperRegistry");
   console.log("registry:", registry.address);
@@ -70,8 +68,9 @@ task("deploy:otherdeed-koda", "Deploy koda wrapper").setAction(async (_, { netwo
   const validator = await deployContract("BitmapValidator", [otherdeed, kodaBitMapData], true);
   console.log("validator:", validator.address);
 
-  const kodaWrapper = await deployContract(
+  const kodaWrapper = await deployContractWithID(
     "KodaWrapper",
+    "ERC721Wrapper",
     [otherdeed, validator.address, "Otherdeed Koda Wrapper", "WKODA"],
     true
   );
@@ -92,18 +91,16 @@ task("deploy:mutant-ape-m2", "Deploy mutant ape m2 wrapper").setAction(async (_,
   }
 
   const m2BitMapData: BigNumberish[] = [];
-  if (m2BitMapData === undefined || m2BitMapData.length === 0) {
-    throw Error("invalid m2BitMapData address");
-  }
 
   const registry = await getContractFromDB("WrapperRegistry");
   console.log("registry:", registry.address);
 
-  const validator = await deployContract("BitmapValidator", [mayc], true);
+  const validator = await deployContract("BitmapValidator", [mayc, m2BitMapData], true);
   console.log("validator:", validator.address);
 
-  const m2Wrapper = await deployContract(
+  const m2Wrapper = await deployContractWithID(
     "MAYCM2Wrapper",
+    "ERC721Wrapper",
     [mayc, validator.address, "MAYC M2 Wrapper", "WMAYCM2"],
     true
   );

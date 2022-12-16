@@ -6,14 +6,13 @@ import { getContract, getContractAddressFromDB, getContractFromDB, waitForTx } f
 import { verifyEtherscanContract } from "./utils/verification";
 import { BigNumberish } from "ethers";
 
-task("veirfy:MoonbirdsUserProxy", "Verify MoonbirdsUserProxy").setAction(async (_, { network, run }) => {
+task("veirfy:MoonbirdsWrapper", "Verify MoonbirdsWrapper").setAction(async (_, { network, run }) => {
   await run("set-DRE");
   await run("compile");
   const networkName = network.name;
 
   const moonbirdsWrapper = await getContractFromDB<MoonbirdsWrapper>("MoonbirdsWrapper");
-  const userProxyImplemention = await moonbirdsWrapper.userProxyImplemention();
 
-  console.log("userProxyImplemention:", userProxyImplemention);
-  await verifyEtherscanContract(userProxyImplemention, []);
+  console.log("moonbirdsWrapper:", moonbirdsWrapper.address);
+  await verifyEtherscanContract(moonbirdsWrapper.address, []);
 });

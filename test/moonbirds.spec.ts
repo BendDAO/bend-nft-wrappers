@@ -19,8 +19,6 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     birdIdWithNesting = ++birdIdTracker;
     await waitForTx(await contracts.mockMoonbirds.mint(birdIdWithNesting));
     await waitForTx(await contracts.mockMoonbirds.toggleNesting([birdIdWithNesting]));
-
-    await waitForTx(await contracts.moonbirdsWrapper.connect(env.accounts[0]).registerUserProxy());
   });
 
   it("Update validator", async () => {
@@ -37,55 +35,39 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     );
   });
 
-  it("User duplicately register proxy (revert expected)", async () => {
+  it("User transfer bird without nesting to contract (revert expected)", async () => {
     const user0 = env.accounts[0];
-
-    const user0ProxyBefore = await contracts.moonbirdsWrapper.getUserProxy(user0.address);
-
-    await expect(contracts.moonbirdsWrapper.connect(env.accounts[0]).registerUserProxy()).to.be.revertedWith(
-      "MoonbirdsWrapper: caller has registered the proxy"
-    );
-
-    const user0ProxyAfter = await contracts.moonbirdsWrapper.getUserProxy(user0.address);
-    expect(user0ProxyAfter).to.be.eq(user0ProxyBefore);
-  });
-
-  it("User transfer bird without nesting to proxy (revert expected)", async () => {
-    const user0 = env.accounts[0];
-    const user0Proxy = await contracts.moonbirdsWrapper.getUserProxy(user0.address);
 
     await expect(
-      contracts.mockMoonbirds.connect(user0).safeTransferWhileNesting(user0.address, user0Proxy, birdIdWithoutNesting)
-    ).to.be.revertedWith("MoonbirdsUserProxy: only support birds in nesting");
+      contracts.mockMoonbirds
+        .connect(user0)
+        .safeTransferWhileNesting(user0.address, contracts.moonbirdsWrapper.address, birdIdWithoutNesting)
+    ).to.be.revertedWith("MoonbirdsWrapper: invalid token id");
   });
 
-  it("User failed to mint for bird without nesting (revert expected)", async () => {
+  it("User failed to mint directly (revert expected)", async () => {
     const user0 = env.accounts[0];
 
     const birdOwnerBefore = await contracts.mockMoonbirds.ownerOf(birdIdWithoutNesting);
 
     // mint
     await expect(contracts.moonbirdsWrapper.connect(user0).mint(birdIdWithoutNesting)).to.be.revertedWith(
-      "MoonbirdsWrapper: token id not valid"
+      "MoonbirdsWrapper: mint not supported"
     );
 
     const birdOwnerAfter = await contracts.mockMoonbirds.ownerOf(birdIdWithoutNesting);
     expect(birdOwnerAfter).to.be.eq(birdOwnerBefore);
   });
 
-  it("User successfully mint for bird with nesting", async () => {
+  it("User successfully transfer & mint for bird with nesting", async () => {
     const user0 = env.accounts[0];
 
-    // transfer
-    const user0Proxy = await contracts.moonbirdsWrapper.getUserProxy(user0.address);
+    // transfer & mint
     await waitForTx(
       await contracts.mockMoonbirds
         .connect(user0)
-        .safeTransferWhileNesting(user0.address, user0Proxy, birdIdWithNesting)
+        .safeTransferWhileNesting(user0.address, contracts.moonbirdsWrapper.address, birdIdWithNesting)
     );
-
-    // mint
-    await waitForTx(await contracts.moonbirdsWrapper.connect(user0).mint(birdIdWithNesting));
 
     const birdOwner1 = await contracts.mockMoonbirds.ownerOf(birdIdWithNesting);
     expect(birdOwner1).to.be.eq(contracts.moonbirdsWrapper.address);
@@ -93,8 +75,9 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     const wBirdOwner1 = await contracts.moonbirdsWrapper.ownerOf(birdIdWithNesting);
     expect(wBirdOwner1).to.be.eq(user0.address);
 
-    const tokenUrl = await contracts.moonbirdsWrapper.tokenURI(birdIdWithNesting);
-    expect(tokenUrl.length).to.be.gt(0);
+    const ogTokenUrl = await contracts.mockMoonbirds.tokenURI(birdIdWithNesting);
+    const wTokenUrl = await contracts.moonbirdsWrapper.tokenURI(birdIdWithNesting);
+    expect(wTokenUrl).to.be.eq(ogTokenUrl);
   });
 
   it("User failed to flash loan for bird with nesting (revert expected)", async () => {
