@@ -23,9 +23,9 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
   });
 
   it("Update validator", async () => {
-    const validatorV2 = await (
-      await ethers.getContractFactory("BitmapValidator")
-    ).deploy(contracts.mockOtherdeed.address, []);
+    const validatorV2Factory = await ethers.getContractFactory("BitmapValidator");
+    const validatorV2 = await validatorV2Factory.deploy();
+    await waitForTx(await validatorV2.initialize(contracts.mockOtherdeed.address, []));
 
     await waitForTx(await contracts.kodaWrapper.connect(env.admin).updateValidator(validatorV2.address));
 

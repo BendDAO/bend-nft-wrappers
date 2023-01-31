@@ -18,7 +18,8 @@ makeSuite("BitmapValidator", (contracts: Contracts, env: Env) => {
   });
 
   it("Constructor and baisc tests", async () => {
-    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy(testCollection.address, [0xa]);
+    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy();
+    await waitForTx(await validator.initialize(testCollection.address, [0xa]));
 
     const tokenId1Valid = await validator.isValid(testCollection.address, 1);
     expect(tokenId1Valid).to.be.eq(true);
@@ -37,7 +38,8 @@ makeSuite("BitmapValidator", (contracts: Contracts, env: Env) => {
   });
 
   it("Enable and disable token ids", async () => {
-    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy(testCollection.address, []);
+    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy();
+    await waitForTx(await validator.initialize(testCollection.address, []));
 
     {
       await waitForTx(await validator.enableTokenIds([1, 3]));
@@ -70,7 +72,8 @@ makeSuite("BitmapValidator", (contracts: Contracts, env: Env) => {
   });
 
   it("Set bitmap value", async () => {
-    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy(testCollection.address, []);
+    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy();
+    await waitForTx(await validator.initialize(testCollection.address, []));
 
     await waitForTx(await validator.setBitMapValue(0, 0xa));
 
@@ -88,7 +91,8 @@ makeSuite("BitmapValidator", (contracts: Contracts, env: Env) => {
   });
 
   it("Set bitmap values", async () => {
-    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy(testCollection.address, []);
+    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy();
+    await waitForTx(await validator.initialize(testCollection.address, []));
 
     const keyValues: {
       key: BigNumberish;

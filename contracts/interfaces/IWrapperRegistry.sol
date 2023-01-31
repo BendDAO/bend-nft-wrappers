@@ -2,24 +2,14 @@
 pragma solidity 0.8.9;
 
 interface IWrapperRegistry {
-    event WrapperCreated(address indexed wrapper, address indexed collection, address indexed validator);
     event WrapperRegistered(address indexed wrapper);
     event WrapperUnregistered(address indexed wrapper);
-
-    function createWrapper(
-        address collection,
-        address validator,
-        string memory name,
-        string memory symbol
-    ) external returns (address wrapper);
 
     function registerWrapper(address wrapper) external;
 
     function unregisterWrapper(address wrapper) external;
 
     function findWrappers(address collection, uint256 tokenId) external returns (address[] memory wrapper);
-
-    function updateValidator(address wrapper, address validator) external;
 
     function isRegistered(address wrapper) external view returns (bool);
 

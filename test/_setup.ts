@@ -66,11 +66,14 @@ export async function setupContracts(): Promise<Contracts> {
 
   // Common ERC721
   const commonERC721 = await (await ethers.getContractFactory("MintableERC721")).deploy("MOCK ERC721", "MOCK");
-  const commonValidator = await (await ethers.getContractFactory("BitmapValidator")).deploy(commonERC721.address, []);
+  const commonValidatorFactory = await ethers.getContractFactory("BitmapValidator");
+  const commonValidator = await commonValidatorFactory.deploy();
+  await waitForTx(await commonValidator.initialize(commonERC721.address, []));
 
   // registry
   const wrapperRegistryFactory = await ethers.getContractFactory("WrapperRegistry");
   const wrapperRegistry = await wrapperRegistryFactory.deploy();
+  await waitForTx(await wrapperRegistry.initialize());
 
   const flashLoanReceiverFactory = await ethers.getContractFactory("MockFlashLoanReceiver");
   const mockFlashLoanReceiver = await flashLoanReceiverFactory.deploy();
@@ -80,14 +83,13 @@ export async function setupContracts(): Promise<Contracts> {
   const mockOtherdeed = await otherdeedFactory.deploy("MockOtherdeed", "LAND");
 
   const kodaValidatorFactory = await ethers.getContractFactory("BitmapValidator");
-  const kodaValidator = await kodaValidatorFactory.deploy(mockOtherdeed.address, []);
+  const kodaValidator = await kodaValidatorFactory.deploy();
+  await waitForTx(await kodaValidator.initialize(mockOtherdeed.address, []));
 
   const kodaWrapperFactory = await ethers.getContractFactory("ERC721Wrapper");
-  const kodaWrapper = await kodaWrapperFactory.deploy(
-    mockOtherdeed.address,
-    kodaValidator.address,
-    "Otherdeed Koda Wrapper",
-    "WKODA"
+  const kodaWrapper = await kodaWrapperFactory.deploy();
+  await waitForTx(
+    await kodaWrapper.initialize(mockOtherdeed.address, kodaValidator.address, "Otherdeed Koda Wrapper", "WKODA")
   );
 
   // Moonbirds wrapper
@@ -95,14 +97,18 @@ export async function setupContracts(): Promise<Contracts> {
   const mockMoonbirds = await mockMoonbirdsFactory.deploy("MockMoonbirds", "MOONBIRD");
 
   const moonbirdsValidatorFactory = await ethers.getContractFactory("MoonbirdsValidator");
-  const moonbirdsValidator = await moonbirdsValidatorFactory.deploy(mockMoonbirds.address);
+  const moonbirdsValidator = await moonbirdsValidatorFactory.deploy();
+  await waitForTx(await moonbirdsValidator.initialize(mockMoonbirds.address));
 
   const moonbirdsWrapperFactory = await ethers.getContractFactory("MoonbirdsWrapper");
-  const moonbirdsWrapper = await moonbirdsWrapperFactory.deploy(
-    mockMoonbirds.address,
-    moonbirdsValidator.address,
-    "Moonbirds Wrapper",
-    "WMOONBIRD"
+  const moonbirdsWrapper = await moonbirdsWrapperFactory.deploy();
+  await waitForTx(
+    await moonbirdsWrapper.initialize(
+      mockMoonbirds.address,
+      moonbirdsValidator.address,
+      "Moonbirds Wrapper",
+      "WMOONBIRD"
+    )
   );
 
   const moonbirdsReceiverFactory = await ethers.getContractFactory("MockMoonbirdsFlashLoanReceiver");

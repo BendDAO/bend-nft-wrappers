@@ -1,39 +1,55 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
+import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import {IERC721Wrapper} from "../interfaces/IERC721Wrapper.sol";
 import {IWrapperValidator} from "../interfaces/IWrapperValidator.sol";
 import {IFlashLoanReceiver} from "../interfaces/IFlashLoanReceiver.sol";
 import {IMoonbirds} from "./IMoonbirds.sol";
 
-contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, ReentrancyGuard, ERC721 {
-    using Clones for address;
-
-    IERC721Metadata public immutable override underlyingToken;
+contract MoonbirdsWrapper is
+    IERC721Wrapper,
+    IERC721ReceiverUpgradeable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    ERC721Upgradeable
+{
+    IERC721MetadataUpgradeable public override underlyingToken;
     IWrapperValidator public override validator;
     address private _currentFlashLoanReceiver;
     address private _currentFlashLoanMsgSender;
 
-    constructor(
-        IERC721Metadata underlyingToken_,
+    function initialize(
+        IERC721MetadataUpgradeable underlyingToken_,
         IWrapperValidator validator_,
         string memory name,
         string memory symbol
-    ) ERC721(name, symbol) {
-        require(validator_.underlyingToken() == underlyingToken_, "MoonbirdsWrapper: underlying token mismatch");
+    ) public initializer {
+        __ReentrancyGuard_init();
+        __Ownable_init();
+        __ERC721_init(name, symbol);
+
+        require(
+            validator_.underlyingToken() == address(underlyingToken_),
+            "MoonbirdsWrapper: underlying token mismatch"
+        );
         underlyingToken = underlyingToken_;
         validator = validator_;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Upgradeable, IERC165Upgradeable)
+        returns (bool)
+    {
         return interfaceId == type(IERC721Wrapper).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -60,12 +76,12 @@ contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, Reentranc
             _mint(from, tokenId);
         }
 
-        return IERC721Receiver.onERC721Received.selector;
+        return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 
     function updateValidator(address validator_) external override onlyOwner {
         require(
-            IWrapperValidator(validator_).underlyingToken() == underlyingToken,
+            IWrapperValidator(validator_).underlyingToken() == address(underlyingToken),
             "MoonbirdsWrapper: underlying token mismatch"
         );
         address preValidator = address(validator);
@@ -132,7 +148,12 @@ contract MoonbirdsWrapper is IERC721Wrapper, IERC721Receiver, Ownable, Reentranc
         }
     }
 
-    function tokenURI(uint256 tokenId) public view override(IERC721Metadata, ERC721) returns (string memory) {
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(IERC721MetadataUpgradeable, ERC721Upgradeable)
+        returns (string memory)
+    {
         return underlyingToken.tokenURI(tokenId);
     }
 }

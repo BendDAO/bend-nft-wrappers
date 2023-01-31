@@ -22,9 +22,8 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
   });
 
   it("Update validator", async () => {
-    const validatorV2 = await (
-      await ethers.getContractFactory("MoonbirdsValidator")
-    ).deploy(contracts.mockMoonbirds.address);
+    const validatorV2 = await (await ethers.getContractFactory("MoonbirdsValidator")).deploy();
+    await waitForTx(await validatorV2.initialize(contracts.mockMoonbirds.address));
 
     await waitForTx(await contracts.moonbirdsWrapper.connect(env.admin).updateValidator(validatorV2.address));
     const validatorAfter = await contracts.moonbirdsWrapper.validator();

@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
-import {BitMaps} from "./libraries/BitMaps.sol";
-import {IWrapperValidator, IERC721Metadata} from "./interfaces/IWrapperValidator.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract BitmapValidator is IWrapperValidator, Ownable {
+import {BitMaps} from "./libraries/BitMaps.sol";
+import {IWrapperValidator} from "./interfaces/IWrapperValidator.sol";
+
+contract BitmapValidator is IWrapperValidator, OwnableUpgradeable {
     struct KeyEntry {
         uint256 key;
         uint256 value;
     }
     using BitMaps for BitMaps.BitMap;
-    IERC721Metadata public immutable override underlyingToken;
+    address public override underlyingToken;
     BitMaps.BitMap private _bitmap;
 
-    constructor(address underlyingToken_, uint256[] memory data_) {
-        underlyingToken = IERC721Metadata(underlyingToken_);
+    function initialize(address underlyingToken_, uint256[] memory data_) public initializer {
+        __Ownable_init();
+
+        underlyingToken = underlyingToken_;
         _bitmap.init(data_);
     }
 

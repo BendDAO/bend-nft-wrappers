@@ -6,6 +6,7 @@ import {
   deployContract,
   deployContractWithID,
   deployProxyContract,
+  deployProxyContractWithID,
   getContractAddressFromDB,
   getContractFromDB,
   waitForTx,
@@ -13,16 +14,16 @@ import {
 import { verifyEtherscanContract } from "./utils/verification";
 import { BigNumberish } from "ethers";
 
-task("deploy:registry", "Deploy wrapper registry").setAction(async (_, { network, run }) => {
+task("deploy:WrapperRegistry", "Deploy wrapper registry").setAction(async (_, { network, run }) => {
   await run("set-DRE");
   await run("compile");
   const networkName = network.name;
 
-  const registry = await deployContract("WrapperRegistry", [], true);
+  const registry = await deployProxyContract("WrapperRegistry", [], true);
   console.log("WrapperRegistry:", registry.address);
 });
 
-task("deploy:moonbirds", "Deploy moonbirds wrapper").setAction(async (_, { network, run }) => {
+task("deploy:MoonbirdsWrapper", "Deploy moonbirds wrapper").setAction(async (_, { network, run }) => {
   await run("set-DRE");
   await run("compile");
   const networkName = network.name;
@@ -33,13 +34,10 @@ task("deploy:moonbirds", "Deploy moonbirds wrapper").setAction(async (_, { netwo
     throw Error("invalid moonbirds address");
   }
 
-  const registry = await getContractFromDB("WrapperRegistry");
-  console.log("registry:", registry.address);
-
-  const validator = await deployContract("MoonbirdsValidator", [moonbirds], true);
+  const validator = await deployProxyContract("MoonbirdsValidator", [moonbirds], true);
   console.log("validator:", validator.address);
 
-  const moonbirdsWrapper = await deployContract(
+  const moonbirdsWrapper = await deployProxyContract(
     "MoonbirdsWrapper",
     [moonbirds, validator.address, "Moonbirds Wrapper", "WMOONBIRD"],
     true
@@ -49,7 +47,7 @@ task("deploy:moonbirds", "Deploy moonbirds wrapper").setAction(async (_, { netwo
   await run("config:registerWrapper", { wrapper: moonbirdsWrapper.address });
 });
 
-task("deploy:otherdeed-koda", "Deploy koda wrapper").setAction(async (_, { network, run }) => {
+task("deploy:Otherdeed:KodaWrapper", "Deploy koda wrapper").setAction(async (_, { network, run }) => {
   await run("set-DRE");
   await run("compile");
   const networkName = network.name;
@@ -62,13 +60,10 @@ task("deploy:otherdeed-koda", "Deploy koda wrapper").setAction(async (_, { netwo
 
   const kodaBitMapData: BigNumberish[] = [];
 
-  const registry = await getContractFromDB("WrapperRegistry");
-  console.log("registry:", registry.address);
-
-  const validator = await deployContract("BitmapValidator", [otherdeed, kodaBitMapData], true);
+  const validator = await deployProxyContract("BitmapValidator", [otherdeed, kodaBitMapData], true);
   console.log("validator:", validator.address);
 
-  const kodaWrapper = await deployContractWithID(
+  const kodaWrapper = await deployProxyContractWithID(
     "KodaWrapper",
     "ERC721Wrapper",
     [otherdeed, validator.address, "Otherdeed Koda Wrapper", "WKODA"],
@@ -79,7 +74,7 @@ task("deploy:otherdeed-koda", "Deploy koda wrapper").setAction(async (_, { netwo
   await run("config:registerWrapper", { wrapper: kodaWrapper.address });
 });
 
-task("deploy:mutant-ape-m2", "Deploy mutant ape m2 wrapper").setAction(async (_, { network, run }) => {
+task("deploy:MAYC:M2Wrapper", "Deploy MAYC M2 wrapper").setAction(async (_, { network, run }) => {
   await run("set-DRE");
   await run("compile");
   const networkName = network.name;
@@ -92,13 +87,10 @@ task("deploy:mutant-ape-m2", "Deploy mutant ape m2 wrapper").setAction(async (_,
 
   const m2BitMapData: BigNumberish[] = [];
 
-  const registry = await getContractFromDB("WrapperRegistry");
-  console.log("registry:", registry.address);
-
-  const validator = await deployContract("BitmapValidator", [mayc, m2BitMapData], true);
+  const validator = await deployProxyContract("BitmapValidator", [mayc, m2BitMapData], true);
   console.log("validator:", validator.address);
 
-  const m2Wrapper = await deployContractWithID(
+  const m2Wrapper = await deployProxyContractWithID(
     "MAYCM2Wrapper",
     "ERC721Wrapper",
     [mayc, validator.address, "MAYC M2 Wrapper", "WMAYCM2"],
@@ -108,21 +100,6 @@ task("deploy:mutant-ape-m2", "Deploy mutant ape m2 wrapper").setAction(async (_,
 
   await run("config:registerWrapper", { wrapper: m2Wrapper.address });
 });
-
-task("config:createWrapper", "Create wrapper")
-  .addParam("collection", "collection address")
-  .addParam("validator", "validator address")
-  .addParam("name", "name of wrapper")
-  .addParam("symbol", "symbol of wrapper")
-  .setAction(async ({ collection, validator, name, symbol }, { run }) => {
-    await run("set-DRE");
-    const registry = await getContractFromDB<IWrapperRegistry>("WrapperRegistry");
-    const createTx = await waitForTx(await registry.createWrapper(collection, validator, name, symbol));
-    if (createTx.events === undefined) {
-      throw Error("createWrapper failed");
-    }
-    console.log("Event WrapperCreated:", createTx.events[1].args);
-  });
 
 task("config:registerWrapper", "Register wrapper")
   .addParam("wrapper", "wrapper address")

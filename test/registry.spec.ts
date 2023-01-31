@@ -15,26 +15,17 @@ makeSuite("WrapperRegistry", (contracts: Contracts, env: Env) => {
     tokenIdTracker = 0;
 
     tokenId1 = ++tokenIdTracker;
-  });
 
-  it("Create wrapper", async () => {
-    const createTx = await waitForTx(
-      await contracts.wrapperRegistry
-        .connect(env.admin)
-        .createWrapper(contracts.commonERC721.address, contracts.commonValidator.address, "Common Wrapper", "WCOMMON")
+    const wrapperFactory = await ethers.getContractFactory("ERC721Wrapper");
+    testWrapper = await wrapperFactory.deploy();
+    await waitForTx(
+      await testWrapper.initialize(
+        contracts.commonERC721.address,
+        contracts.commonValidator.address,
+        "Test Wrapper",
+        "TWRAP"
+      )
     );
-
-    let createWrapperAddress = "";
-    if (createTx.events !== undefined && createTx.events.length > 0) {
-      if (createTx.events[1].args !== undefined && createTx.events[1].args.length > 0) {
-        createWrapperAddress = createTx.events[1].args[0];
-      }
-    }
-    if (createWrapperAddress === undefined || createWrapperAddress === "") {
-      throw Error("createWrapper failed");
-    }
-
-    testWrapper = await ethers.getContractAt("ERC721Wrapper", createWrapperAddress);
   });
 
   it("Register wrapper", async () => {
@@ -55,26 +46,7 @@ makeSuite("WrapperRegistry", (contracts: Contracts, env: Env) => {
     expect(wrapperAddresses1[0][0]).to.be.eq(testWrapper.address);
   });
 
-  it("Update validator", async () => {
-    const validatorV2 = await (
-      await ethers.getContractFactory("BitmapValidator")
-    ).deploy(contracts.commonERC721.address, []);
-
-    await waitForTx(
-      await contracts.wrapperRegistry.connect(env.admin).updateValidator(testWrapper.address, validatorV2.address)
-    );
-
-    const validatorAfter = await testWrapper.validator();
-    expect(validatorAfter).to.be.eq(validatorV2.address);
-
-    await waitForTx(
-      await contracts.wrapperRegistry
-        .connect(env.admin)
-        .updateValidator(testWrapper.address, contracts.commonValidator.address)
-    );
-  });
-
-  it("Config validator and find wrapper by token idr", async () => {
+  it("Find wrapper by token idr", async () => {
     await waitForTx(await contracts.commonValidator.connect(env.admin).enableTokenIds([tokenId1]));
 
     const retWrappers = await contracts.wrapperRegistry.findWrappers(contracts.commonERC721.address, tokenId1);
