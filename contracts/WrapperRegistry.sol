@@ -16,6 +16,7 @@ contract WrapperRegistry is IWrapperRegistry, OwnableUpgradeable, ReentrancyGuar
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     mapping(address => EnumerableSetUpgradeable.AddressSet) private _wrappers;
+    mapping(address => bool) private _registereds;
 
     function initialize() public initializer {
         __ReentrancyGuard_init();
@@ -23,14 +24,16 @@ contract WrapperRegistry is IWrapperRegistry, OwnableUpgradeable, ReentrancyGuar
     }
 
     function registerWrapper(address wrapper) external override onlyOwner {
-        require(!_isRegistered(wrapper), "WrapperRegistry: wrapper already registered");
+        require(!isRegistered(wrapper), "WrapperRegistry: wrapper already registered");
+        _registereds[wrapper] = true;
         _wrappers[address(IERC721Wrapper(wrapper).underlyingToken())].add(wrapper);
         emit WrapperRegistered(wrapper);
     }
 
     function unregisterWrapper(address wrapper) external override onlyOwner {
-        require(_isRegistered(wrapper), "WrapperRegistry: wrapper not registered");
+        require(isRegistered(wrapper), "WrapperRegistry: wrapper not registered");
         _wrappers[address(IERC721Wrapper(wrapper).underlyingToken())].remove(wrapper);
+        _registereds[wrapper] = false;
         emit WrapperUnregistered(wrapper);
     }
 
@@ -61,12 +64,8 @@ contract WrapperRegistry is IWrapperRegistry, OwnableUpgradeable, ReentrancyGuar
         }
     }
 
-    function isRegistered(address wrapper) external view returns (bool) {
-        return _isRegistered(wrapper);
-    }
-
-    function _isRegistered(address wrapper) private view returns (bool) {
-        return _wrappers[address(IERC721Wrapper(wrapper).underlyingToken())].contains(wrapper);
+    function isRegistered(address wrapper) public view returns (bool) {
+        return _registereds[wrapper];
     }
 
     function viewCollectionWrapperCount(address collection) external view override returns (uint256) {
