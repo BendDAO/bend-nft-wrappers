@@ -22,6 +22,13 @@ contract ERC721Wrapper is
     IERC721MetadataUpgradeable public override underlyingToken;
     IWrapperValidator public override validator;
 
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[48] private __gap;
+
     function initialize(
         IERC721MetadataUpgradeable underlyingToken_,
         IWrapperValidator validator_,
