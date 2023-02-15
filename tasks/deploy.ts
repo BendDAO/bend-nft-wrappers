@@ -60,7 +60,7 @@ task("deploy:Otherdeed:KodaWrapper", "Deploy koda wrapper").setAction(async (_, 
 
   const kodaBitMapData: BigNumberish[] = [];
 
-  const validator = await deployProxyContract("BitmapValidator", [otherdeed, kodaBitMapData], true);
+  const validator = await deployProxyContract("KodaValidator", [otherdeed, kodaBitMapData], true);
   console.log("validator:", validator.address);
 
   const kodaWrapper = await deployProxyContractWithID(
@@ -87,7 +87,7 @@ task("deploy:MAYC:M2Wrapper", "Deploy MAYC M2 wrapper").setAction(async (_, { ne
 
   const m2BitMapData: BigNumberish[] = [];
 
-  const validator = await deployProxyContract("BitmapValidator", [mayc, m2BitMapData], true);
+  const validator = await deployProxyContract("MAYCM2Validator", [mayc, m2BitMapData], true);
   console.log("validator:", validator.address);
 
   const m2Wrapper = await deployProxyContractWithID(

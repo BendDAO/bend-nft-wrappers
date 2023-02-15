@@ -10,5 +10,13 @@
   "MoonbirdsWrapper": {
     "address": "0xdf98BFe3CDF4CA3C0a9F1dE2e34e6D9E049E2952",
     "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
+  },
+  "KodaValidator": {
+    "address": "0x59412fdD8954017cA565F00dE283339D93D1a5a8",
+    "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
+  },
+  "KodaWrapper": {
+    "address": "0x98448337bCEf1D414D9a27bcaf02008af08280e8",
+    "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
   }
 }
