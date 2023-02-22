@@ -22,6 +22,26 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     await waitForTx(await contracts.mockOtherdeed.setApprovalForAll(contracts.kodaWrapper.address, true));
   });
 
+  it("User without permission failed to pause (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(contracts.moonbirdsWrapper.connect(user5).setPause(true)).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
+  });
+
+  it("Failed to do mint & burn when paused (revert expected)", async () => {
+    const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setPause(true));
+
+    await expect(contracts.kodaWrapper.connect(user0).mint(landIdWithKoda)).to.be.revertedWith("Pausable: paused");
+
+    await expect(contracts.kodaWrapper.connect(user0).burn(landIdWithKoda)).to.be.revertedWith("Pausable: paused");
+
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setPause(false));
+  });
+
   it("Update validator", async () => {
     const validatorV2Factory = await ethers.getContractFactory("BitmapValidator");
     const validatorV2 = await validatorV2Factory.deploy();

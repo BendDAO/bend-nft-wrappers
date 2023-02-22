@@ -3,20 +3,20 @@ import { expect, assert } from "chai";
 import { BigNumber, constants } from "ethers";
 import { ethers } from "hardhat";
 import { waitForTx } from "../tasks/utils/helpers";
-import { ERC721Wrapper } from "../typechain-types";
+import { MockERC721Wrapper } from "../typechain-types";
 import { Contracts, Env, makeSuite } from "./_setup";
 
 makeSuite("WrapperRegistry", (contracts: Contracts, env: Env) => {
   let tokenIdTracker: number;
   let tokenId1: number;
-  let testWrapper: ERC721Wrapper;
+  let testWrapper: MockERC721Wrapper;
 
   before(async () => {
     tokenIdTracker = 0;
 
     tokenId1 = ++tokenIdTracker;
 
-    const wrapperFactory = await ethers.getContractFactory("ERC721Wrapper");
+    const wrapperFactory = await ethers.getContractFactory("MockERC721Wrapper");
     testWrapper = await wrapperFactory.deploy();
     await waitForTx(
       await testWrapper.initialize(

@@ -21,6 +21,30 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     await waitForTx(await contracts.mockMoonbirds.toggleNesting([birdIdWithNesting]));
   });
 
+  it("User without permission failed to pause (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(contracts.moonbirdsWrapper.connect(user5).setPause(true)).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
+  });
+
+  it("Failed to do mint & burn when paused (revert expected)", async () => {
+    const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.moonbirdsWrapper.connect(env.admin).setPause(true));
+
+    await expect(contracts.moonbirdsWrapper.connect(user0).mint(birdIdWithNesting)).to.be.revertedWith(
+      "Pausable: paused"
+    );
+
+    await expect(contracts.moonbirdsWrapper.connect(user0).burn(birdIdWithNesting)).to.be.revertedWith(
+      "Pausable: paused"
+    );
+
+    await waitForTx(await contracts.moonbirdsWrapper.connect(env.admin).setPause(false));
+  });
+
   it("Update validator", async () => {
     const validatorV2 = await (await ethers.getContractFactory("MoonbirdsValidator")).deploy();
     await waitForTx(await validatorV2.initialize(contracts.mockMoonbirds.address));

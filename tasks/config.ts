@@ -38,7 +38,7 @@ export const Moonbirds: Params<string> = {
 };
 
 export const Otherdeed: Params<string> = {
-  [Network.goerli]: "0x95088aC9B669Dc8Fe4BFC828dF5fA143E1C5fe0E",
+  [Network.goerli]: "0xC1272E57eA9086832eEEb7810B7553D75e0CE419",
   [Network.mainnet]: "0x34d85c9CDeB23FA97cb08333b511ac86E1C4E258",
 };
 

@@ -7,6 +7,7 @@ import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/to
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import {IERC721Wrapper} from "../interfaces/IERC721Wrapper.sol";
 import {IWrapperValidator} from "../interfaces/IWrapperValidator.sol";
@@ -18,6 +19,7 @@ contract MoonbirdsWrapper is
     IERC721ReceiverUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
+    PausableUpgradeable,
     ERC721Upgradeable
 {
     IERC721MetadataUpgradeable public override underlyingToken;
@@ -32,6 +34,7 @@ contract MoonbirdsWrapper is
         string memory name,
         string memory symbol
     ) public initializer {
+        __Pausable_init();
         __ReentrancyGuard_init();
         __Ownable_init();
         __ERC721_init(name, symbol);
@@ -90,12 +93,12 @@ contract MoonbirdsWrapper is
         emit ValidatorUpdated(preValidator, address(validator));
     }
 
-    function mint(uint256 tokenId) external override nonReentrant {
+    function mint(uint256 tokenId) external override nonReentrant whenNotPaused {
         tokenId;
         require(false, "MoonbirdsWrapper: mint not supported");
     }
 
-    function burn(uint256 tokenId) external override nonReentrant {
+    function burn(uint256 tokenId) external override nonReentrant whenNotPaused {
         require(_msgSender() == ownerOf(tokenId), "MoonbirdsWrapper: only owner can burn");
 
         require(address(this) == underlyingToken.ownerOf(tokenId), "MoonbirdsWrapper: invalid token owner");
@@ -115,7 +118,7 @@ contract MoonbirdsWrapper is
         address receiverAddress,
         uint256[] calldata tokenIds,
         bytes calldata params
-    ) external override nonReentrant {
+    ) external override nonReentrant whenNotPaused {
         uint256 i;
         IFlashLoanReceiver receiver = IFlashLoanReceiver(receiverAddress);
 
@@ -154,6 +157,14 @@ contract MoonbirdsWrapper is
             );
 
             emit FlashLoan(receiverAddress, _msgSender(), address(underlyingToken), tokenIds[i]);
+        }
+    }
+
+    function setPause(bool flag) public onlyOwner {
+        if (flag) {
+            _pause();
+        } else {
+            _unpause();
         }
     }
 

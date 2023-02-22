@@ -4,7 +4,7 @@ import { ethers, network, upgrades } from "hardhat";
 import { parseEther } from "ethers/lib/utils";
 import {
   WrapperRegistry,
-  ERC721Wrapper,
+  KodaWrapper,
   MoonbirdsValidator,
   MoonbirdsWrapper,
   BitmapValidator,
@@ -37,7 +37,7 @@ export interface Contracts {
 
   mockOtherdeed: MintableERC721;
   kodaValidator: BitmapValidator;
-  kodaWrapper: ERC721Wrapper;
+  kodaWrapper: KodaWrapper;
 
   // moonbirds
   mockMoonbirds: MockMoonbirds;
@@ -86,7 +86,7 @@ export async function setupContracts(): Promise<Contracts> {
   const kodaValidator = await kodaValidatorFactory.deploy();
   await waitForTx(await kodaValidator.initialize(mockOtherdeed.address, []));
 
-  const kodaWrapperFactory = await ethers.getContractFactory("ERC721Wrapper");
+  const kodaWrapperFactory = await ethers.getContractFactory("KodaWrapper");
   const kodaWrapper = await kodaWrapperFactory.deploy();
   await waitForTx(
     await kodaWrapper.initialize(mockOtherdeed.address, kodaValidator.address, "Otherdeed Koda Wrapper", "WKODA")

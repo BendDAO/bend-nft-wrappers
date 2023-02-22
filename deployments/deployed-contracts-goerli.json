@@ -12,11 +12,11 @@
     "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
   },
   "KodaValidator": {
-    "address": "0x59412fdD8954017cA565F00dE283339D93D1a5a8",
+    "address": "0x1CFcB75b327Fd7f67D1F8A0656017190bFFE334f",
     "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
   },
   "KodaWrapper": {
-    "address": "0x98448337bCEf1D414D9a27bcaf02008af08280e8",
+    "address": "0x7f7BB5F35009EfC5988d47D6D0e62f61296dfDcA",
     "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
   }
 }

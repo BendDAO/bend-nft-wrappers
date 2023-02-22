@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { task } from "hardhat/config";
 import { getParams, MAYC, Moonbirds, Otherdeed } from "./config";
-import { IWrapperRegistry } from "../typechain-types";
+import { IWrapperRegistry, IWrapperValidator } from "../typechain-types";
 import {
   deployContract,
   deployContractWithID,
   deployProxyContract,
   deployProxyContractWithID,
+  getContract,
   getContractAddressFromDB,
   getContractFromDB,
   waitForTx,
@@ -60,45 +61,25 @@ task("deploy:Otherdeed:KodaWrapper", "Deploy koda wrapper").setAction(async (_, 
 
   const kodaBitMapData: BigNumberish[] = [];
 
-  const validator = await deployProxyContract("KodaValidator", [otherdeed, kodaBitMapData], true);
+  const validator = await deployProxyContractWithID(
+    "KodaValidator",
+    "BitmapValidator",
+    [otherdeed, kodaBitMapData],
+    true
+  );
+  // const validatorAddr = await getContractAddressFromDB("KodaValidator");
+  // const validator = await getContract("BitmapValidator", validatorAddr);
   console.log("validator:", validator.address);
 
   const kodaWrapper = await deployProxyContractWithID(
     "KodaWrapper",
-    "ERC721Wrapper",
+    "KodaWrapper",
     [otherdeed, validator.address, "Otherdeed Koda Wrapper", "WKODA"],
     true
   );
   console.log("KodaWrapper:", kodaWrapper.address);
 
   await run("config:registerWrapper", { wrapper: kodaWrapper.address });
-});
-
-task("deploy:MAYC:M2Wrapper", "Deploy MAYC M2 wrapper").setAction(async (_, { network, run }) => {
-  await run("set-DRE");
-  await run("compile");
-  const networkName = network.name;
-
-  const mayc = getParams(MAYC, networkName);
-  console.log("MAYC:", mayc);
-  if (mayc === undefined || mayc === "") {
-    throw Error("invalid MAYC address");
-  }
-
-  const m2BitMapData: BigNumberish[] = [];
-
-  const validator = await deployProxyContract("MAYCM2Validator", [mayc, m2BitMapData], true);
-  console.log("validator:", validator.address);
-
-  const m2Wrapper = await deployProxyContractWithID(
-    "MAYCM2Wrapper",
-    "ERC721Wrapper",
-    [mayc, validator.address, "MAYC M2 Wrapper", "WMAYCM2"],
-    true
-  );
-  console.log("m2Wrapper:", m2Wrapper.address);
-
-  await run("config:registerWrapper", { wrapper: m2Wrapper.address });
 });
 
 task("config:registerWrapper", "Register wrapper")
