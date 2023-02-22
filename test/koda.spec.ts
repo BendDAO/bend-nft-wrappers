@@ -68,6 +68,42 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     expect(tokenUrl.length).to.be.gt(0);
   });
 
+  it("User without permission failed to enabled flash loan (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(contracts.kodaWrapper.connect(user5).flipFlashLoanEnabled()).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
+  });
+
+  it("User has permission sucess to enabled flash loan", async () => {
+    const isEnabledBefore = await contracts.kodaWrapper.isFlashLoanEnabled();
+
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).flipFlashLoanEnabled());
+
+    const isEnabledAfter = await contracts.kodaWrapper.isFlashLoanEnabled();
+
+    expect(isEnabledAfter).to.be.eq(!isEnabledBefore);
+
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).flipFlashLoanEnabled());
+  });
+
+  it("User failed to flash loan when not enabled (revert expected)", async () => {
+    const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.mockFlashLoanReceiver.setTestFlag(1));
+
+    // flash loan
+    await expect(
+      contracts.kodaWrapper.connect(user0).flashLoan(contracts.mockFlashLoanReceiver.address, [landIdWithKoda], [])
+    ).to.be.revertedWith("ERC721Wrapper: flash loan not enabled");
+
+    await waitForTx(await contracts.mockFlashLoanReceiver.setTestFlag(0));
+
+    // enable the flag
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).flipFlashLoanEnabled());
+  });
+
   it("User failed to flash loan for land with koda (revert expected)", async () => {
     const user0 = env.accounts[0];
 

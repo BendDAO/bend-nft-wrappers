@@ -7,10 +7,13 @@ import {IWrapperValidator} from "./IWrapperValidator.sol";
 interface IERC721Wrapper is IERC721MetadataUpgradeable {
     event FlashLoan(address indexed target, address indexed initiator, address indexed token, uint256 tokenId);
     event ValidatorUpdated(address indexed previousValidator, address indexed currentValidator);
+    event FlashLoanEnabled(bool enabled);
 
     function underlyingToken() external view returns (IERC721MetadataUpgradeable);
 
     function validator() external view returns (IWrapperValidator);
+
+    function isFlashLoanEnabled() external view returns (bool);
 
     function updateValidator(address validator) external;
 

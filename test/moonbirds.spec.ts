@@ -79,6 +79,44 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     expect(wTokenUrl).to.be.eq(ogTokenUrl);
   });
 
+  it("User without permission failed to enabled flash loan (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(contracts.moonbirdsWrapper.connect(user5).flipFlashLoanEnabled()).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
+  });
+
+  it("User has permission sucess to enabled flash loan", async () => {
+    const isEnabledBefore = await contracts.moonbirdsWrapper.isFlashLoanEnabled();
+
+    await waitForTx(await contracts.moonbirdsWrapper.connect(env.admin).flipFlashLoanEnabled());
+
+    const isEnabledAfter = await contracts.moonbirdsWrapper.isFlashLoanEnabled();
+
+    expect(isEnabledAfter).to.be.eq(!isEnabledBefore);
+
+    await waitForTx(await contracts.moonbirdsWrapper.connect(env.admin).flipFlashLoanEnabled());
+  });
+
+  it("User failed to flash loan when not enabled (revert expected)", async () => {
+    const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.mockMoonbirdsFlashLoanReceiver.setTestFlag(1));
+
+    // flash loan
+    await expect(
+      contracts.moonbirdsWrapper
+        .connect(user0)
+        .flashLoan(contracts.mockMoonbirdsFlashLoanReceiver.address, [birdIdWithNesting], [])
+    ).to.be.revertedWith("MoonbirdsWrapper: flash loan not enabled");
+
+    await waitForTx(await contracts.mockMoonbirdsFlashLoanReceiver.setTestFlag(0));
+
+    // enable the flag
+    await waitForTx(await contracts.moonbirdsWrapper.connect(env.admin).flipFlashLoanEnabled());
+  });
+
   it("User failed to flash loan for bird with nesting (revert expected)", async () => {
     const user0 = env.accounts[0];
 

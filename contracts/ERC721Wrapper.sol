@@ -21,13 +21,14 @@ contract ERC721Wrapper is
 {
     IERC721MetadataUpgradeable public override underlyingToken;
     IWrapperValidator public override validator;
+    bool public override isFlashLoanEnabled;
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[48] private __gap;
+    uint256[47] private __gap;
 
     function initialize(
         IERC721MetadataUpgradeable underlyingToken_,
@@ -92,6 +93,12 @@ contract ERC721Wrapper is
         _burn(tokenId);
     }
 
+    function flipFlashLoanEnabled() public onlyOwner {
+        isFlashLoanEnabled = !isFlashLoanEnabled;
+
+        emit FlashLoanEnabled(isFlashLoanEnabled);
+    }
+
     function flashLoan(
         address receiverAddress,
         uint256[] calldata tokenIds,
@@ -99,6 +106,8 @@ contract ERC721Wrapper is
     ) external override nonReentrant {
         uint256 i;
         IFlashLoanReceiver receiver = IFlashLoanReceiver(receiverAddress);
+
+        require(isFlashLoanEnabled, "ERC721Wrapper: flash loan not enabled");
 
         // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
 

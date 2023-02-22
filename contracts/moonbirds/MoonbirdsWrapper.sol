@@ -24,6 +24,7 @@ contract MoonbirdsWrapper is
     IWrapperValidator public override validator;
     address private _currentFlashLoanReceiver;
     address private _currentFlashLoanMsgSender;
+    bool public override isFlashLoanEnabled;
 
     function initialize(
         IERC721MetadataUpgradeable underlyingToken_,
@@ -104,6 +105,12 @@ contract MoonbirdsWrapper is
         IMoonbirds(address(underlyingToken)).safeTransferWhileNesting(address(this), _msgSender(), tokenId);
     }
 
+    function flipFlashLoanEnabled() public onlyOwner {
+        isFlashLoanEnabled = !isFlashLoanEnabled;
+
+        emit FlashLoanEnabled(isFlashLoanEnabled);
+    }
+
     function flashLoan(
         address receiverAddress,
         uint256[] calldata tokenIds,
@@ -111,6 +118,8 @@ contract MoonbirdsWrapper is
     ) external override nonReentrant {
         uint256 i;
         IFlashLoanReceiver receiver = IFlashLoanReceiver(receiverAddress);
+
+        require(isFlashLoanEnabled, "MoonbirdsWrapper: flash loan not enabled");
 
         // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
 
