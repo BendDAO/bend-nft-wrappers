@@ -24,13 +24,24 @@ contract ERC721Wrapper is
     IERC721MetadataUpgradeable public override underlyingToken;
     IWrapperValidator public override validator;
     bool public override isFlashLoanEnabled;
+    bool public override isMintEnabled;
+
+    modifier whenFlashLoanEnabled() {
+        require(isFlashLoanEnabled, "ERC721Wrapper: flash loan disabled");
+        _;
+    }
+
+    modifier whenMintEnabled() {
+        require(isMintEnabled, "ERC721Wrapper: mint disabled");
+        _;
+    }
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[47] private __gap;
+    uint256[46] private __gap;
 
     function __ERC721Wrapper_init(
         IERC721MetadataUpgradeable underlyingToken_,
@@ -43,9 +54,11 @@ contract ERC721Wrapper is
         __Ownable_init();
         __ERC721_init(name, symbol);
 
-        require(validator_.underlyingToken() == address(underlyingToken_), "Validator: underlying token mismatch");
+        require(validator_.underlyingToken() == address(underlyingToken_), "ERC721Wrapper: underlying token mismatch");
         underlyingToken = underlyingToken_;
         validator = validator_;
+
+        isMintEnabled = true;
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -78,7 +91,7 @@ contract ERC721Wrapper is
         emit ValidatorUpdated(preValidator, address(validator));
     }
 
-    function mint(uint256 tokenId) external override nonReentrant whenNotPaused {
+    function mint(uint256 tokenId) external override nonReentrant whenNotPaused whenMintEnabled {
         address owner = underlyingToken.ownerOf(tokenId);
         require(_msgSender() == owner, "ERC721Wrapper: only owner can mint");
         require(validator.isValid(address(underlyingToken), tokenId), "ERC721Wrapper: token id not valid");
@@ -96,21 +109,25 @@ contract ERC721Wrapper is
         _burn(tokenId);
     }
 
-    function flipFlashLoanEnabled() public onlyOwner {
-        isFlashLoanEnabled = !isFlashLoanEnabled;
+    function setFlashLoanEnabled(bool value) public onlyOwner {
+        isFlashLoanEnabled = value;
 
-        emit FlashLoanEnabled(isFlashLoanEnabled);
+        emit FlashLoanEnabled(value);
+    }
+
+    function setMintEnabled(bool value) public onlyOwner {
+        isMintEnabled = value;
+
+        emit MintEnabled(value);
     }
 
     function flashLoan(
         address receiverAddress,
         uint256[] calldata tokenIds,
         bytes calldata params
-    ) external override nonReentrant whenNotPaused {
+    ) external override nonReentrant whenNotPaused whenFlashLoanEnabled {
         uint256 i;
         IFlashLoanReceiver receiver = IFlashLoanReceiver(receiverAddress);
-
-        require(isFlashLoanEnabled, "ERC721Wrapper: flash loan not enabled");
 
         // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
 

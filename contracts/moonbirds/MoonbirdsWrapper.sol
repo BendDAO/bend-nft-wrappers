@@ -27,6 +27,12 @@ contract MoonbirdsWrapper is
     address private _currentFlashLoanReceiver;
     address private _currentFlashLoanMsgSender;
     bool public override isFlashLoanEnabled;
+    bool public override isMintEnabled;
+
+    modifier whenFlashLoanEnabled() {
+        require(isFlashLoanEnabled, "MoonbirdsWrapper: flash loan disabled");
+        _;
+    }
 
     function initialize(
         IERC721MetadataUpgradeable underlyingToken_,
@@ -45,6 +51,7 @@ contract MoonbirdsWrapper is
         );
         underlyingToken = underlyingToken_;
         validator = validator_;
+        isMintEnabled = true;
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -77,6 +84,8 @@ contract MoonbirdsWrapper is
                 "MoonbirdsWrapper: token owner not flash loan sender"
             );
         } else {
+            require(isMintEnabled, "MoonbirdsWrapper: mint disabled");
+
             _mint(from, tokenId);
         }
 
@@ -108,21 +117,25 @@ contract MoonbirdsWrapper is
         IMoonbirds(address(underlyingToken)).safeTransferWhileNesting(address(this), _msgSender(), tokenId);
     }
 
-    function flipFlashLoanEnabled() public onlyOwner {
-        isFlashLoanEnabled = !isFlashLoanEnabled;
+    function setFlashLoanEnabled(bool value) public onlyOwner {
+        isFlashLoanEnabled = value;
 
-        emit FlashLoanEnabled(isFlashLoanEnabled);
+        emit FlashLoanEnabled(value);
+    }
+
+    function setMintEnabled(bool value) public onlyOwner {
+        isMintEnabled = value;
+
+        emit MintEnabled(value);
     }
 
     function flashLoan(
         address receiverAddress,
         uint256[] calldata tokenIds,
         bytes calldata params
-    ) external override nonReentrant whenNotPaused {
+    ) external override nonReentrant whenNotPaused whenFlashLoanEnabled {
         uint256 i;
         IFlashLoanReceiver receiver = IFlashLoanReceiver(receiverAddress);
-
-        require(isFlashLoanEnabled, "MoonbirdsWrapper: flash loan not enabled");
 
         // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
 

@@ -22,10 +22,28 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     await waitForTx(await contracts.mockOtherdeed.setApprovalForAll(contracts.kodaWrapper.address, true));
   });
 
+  it("User without permission failed to enabled mint (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(contracts.kodaWrapper.connect(user5).setMintEnabled(true)).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
+  });
+
+  it("User has permission sucess to enabled mint", async () => {
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setMintEnabled(true));
+    const isEnabledAfter1 = await contracts.kodaWrapper.isMintEnabled();
+    expect(isEnabledAfter1).to.be.eq(true);
+
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setMintEnabled(false));
+    const isEnabledAfter2 = await contracts.kodaWrapper.isMintEnabled();
+    expect(isEnabledAfter2).to.be.eq(false);
+  });
+
   it("User without permission failed to pause (revert expected)", async () => {
     const user5 = env.accounts[5];
 
-    await expect(contracts.moonbirdsWrapper.connect(user5).setPause(true)).to.be.revertedWith(
+    await expect(contracts.kodaWrapper.connect(user5).setPause(true)).to.be.revertedWith(
       "Ownable: caller is not the owner"
     );
   });
@@ -40,6 +58,18 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     await expect(contracts.kodaWrapper.connect(user0).burn(landIdWithKoda)).to.be.revertedWith("Pausable: paused");
 
     await waitForTx(await contracts.kodaWrapper.connect(env.admin).setPause(false));
+  });
+
+  it("Failed to do mint when mint is disabled (revert expected)", async () => {
+    const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setMintEnabled(false));
+
+    await expect(contracts.kodaWrapper.connect(user0).mint(landIdWithKoda)).to.be.revertedWith(
+      "ERC721Wrapper: mint disabled"
+    );
+
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setMintEnabled(true));
   });
 
   it("Update validator", async () => {
@@ -91,21 +121,19 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
   it("User without permission failed to enabled flash loan (revert expected)", async () => {
     const user5 = env.accounts[5];
 
-    await expect(contracts.kodaWrapper.connect(user5).flipFlashLoanEnabled()).to.be.revertedWith(
+    await expect(contracts.kodaWrapper.connect(user5).setFlashLoanEnabled(true)).to.be.revertedWith(
       "Ownable: caller is not the owner"
     );
   });
 
   it("User has permission sucess to enabled flash loan", async () => {
-    const isEnabledBefore = await contracts.kodaWrapper.isFlashLoanEnabled();
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setFlashLoanEnabled(true));
+    const isEnabledAfter1 = await contracts.kodaWrapper.isFlashLoanEnabled();
+    expect(isEnabledAfter1).to.be.eq(true);
 
-    await waitForTx(await contracts.kodaWrapper.connect(env.admin).flipFlashLoanEnabled());
-
-    const isEnabledAfter = await contracts.kodaWrapper.isFlashLoanEnabled();
-
-    expect(isEnabledAfter).to.be.eq(!isEnabledBefore);
-
-    await waitForTx(await contracts.kodaWrapper.connect(env.admin).flipFlashLoanEnabled());
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setFlashLoanEnabled(false));
+    const isEnabledAfter2 = await contracts.kodaWrapper.isFlashLoanEnabled();
+    expect(isEnabledAfter2).to.be.eq(false);
   });
 
   it("User failed to flash loan when not enabled (revert expected)", async () => {
@@ -116,12 +144,12 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     // flash loan
     await expect(
       contracts.kodaWrapper.connect(user0).flashLoan(contracts.mockFlashLoanReceiver.address, [landIdWithKoda], [])
-    ).to.be.revertedWith("ERC721Wrapper: flash loan not enabled");
+    ).to.be.revertedWith("ERC721Wrapper: flash loan disabled");
 
     await waitForTx(await contracts.mockFlashLoanReceiver.setTestFlag(0));
 
     // enable the flag
-    await waitForTx(await contracts.kodaWrapper.connect(env.admin).flipFlashLoanEnabled());
+    await waitForTx(await contracts.kodaWrapper.connect(env.admin).setFlashLoanEnabled(true));
   });
 
   it("User failed to flash loan for land with koda (revert expected)", async () => {
