@@ -13,6 +13,8 @@ contract MoonbirdsValidator is IWrapperValidator, OwnableUpgradeable {
     function initialize(address underlyingToken_) public initializer {
         __Ownable_init();
 
+        require(underlyingToken_ != address(0), "MoonbirdsValidator: zero underlying token address");
+
         underlyingToken = underlyingToken_;
     }
 

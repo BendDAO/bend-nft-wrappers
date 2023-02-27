@@ -54,6 +54,9 @@ contract ERC721Wrapper is
         __Ownable_init();
         __ERC721_init(name, symbol);
 
+        require(address(underlyingToken_) != address(0), "ERC721Wrapper: zero underlying token address");
+        require(address(validator_) != address(0), "ERC721Wrapper: zero underlying validator address");
+
         require(validator_.underlyingToken() == address(underlyingToken_), "ERC721Wrapper: underlying token mismatch");
         underlyingToken = underlyingToken_;
         validator = validator_;

@@ -18,6 +18,8 @@ contract BitmapValidator is IWrapperValidator, OwnableUpgradeable {
     function initialize(address underlyingToken_, uint256[] memory data_) public initializer {
         __Ownable_init();
 
+        require(underlyingToken_ != address(0), "BitmapValidator: zero underlying token address");
+
         underlyingToken = underlyingToken_;
         _bitmap.init(data_);
     }

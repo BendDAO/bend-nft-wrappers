@@ -45,6 +45,9 @@ contract MoonbirdsWrapper is
         __Ownable_init();
         __ERC721_init(name, symbol);
 
+        require(address(underlyingToken_) != address(0), "MoonbirdsWrapper: zero underlying token address");
+        require(address(validator_) != address(0), "MoonbirdsWrapper: zero underlying validator address");
+
         require(
             validator_.underlyingToken() == address(underlyingToken_),
             "MoonbirdsWrapper: underlying token mismatch"
