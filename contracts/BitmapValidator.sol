@@ -22,6 +22,12 @@ contract BitmapValidator is IWrapperValidator, OwnableUpgradeable {
         _bitmap.init(data_);
     }
 
+    function initBitMapValues(uint256[] memory data_) external onlyOwner {
+        require(_bitmap.getKeyCount() == 0, "BitmapValidator: already inited");
+
+        _bitmap.init(data_);
+    }
+
     function isValid(address collection, uint256 tokenId) external view returns (bool) {
         require(collection == address(underlyingToken), "BitmapValidator: collection mismatch");
         return _bitmap.get(tokenId);

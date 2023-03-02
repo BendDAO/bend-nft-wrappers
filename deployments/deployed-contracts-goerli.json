@@ -18,5 +18,9 @@
   "KodaWrapper": {
     "address": "0x7f7BB5F35009EfC5988d47D6D0e62f61296dfDcA",
     "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
+  },
+  "KodaValidatorTest": {
+    "address": "0x83318682711123EBa962158De7B929CC1E110264",
+    "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
   }
 }

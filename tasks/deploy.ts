@@ -24,6 +24,20 @@ task("deploy:WrapperRegistry", "Deploy wrapper registry").setAction(async (_, { 
   console.log("WrapperRegistry:", registry.address);
 });
 
+task("deploy:BitmapValidator", "Deploy BitmapValidator")
+  .addParam("name", "validator name")
+  .addParam("asset", "asset address")
+  .setAction(async ({ name, asset }, { network, run }) => {
+    await run("set-DRE");
+    await run("compile");
+    const networkName = network.name;
+
+    const initData: BigNumberish[] = [];
+
+    const validator = await deployProxyContractWithID(name, "BitmapValidator", [asset, initData], true);
+    console.log("validator:", validator.address);
+  });
+
 task("deploy:MoonbirdsWrapper", "Deploy moonbirds wrapper").setAction(async (_, { network, run }) => {
   await run("set-DRE");
   await run("compile");

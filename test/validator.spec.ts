@@ -37,6 +37,35 @@ makeSuite("BitmapValidator", (contracts: Contracts, env: Env) => {
     expect(keys[0].length).to.be.eq(1);
   });
 
+  it("Mannually init after constructor (revert expect)", async () => {
+    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy();
+    await waitForTx(await validator.initialize(testCollection.address, [0xa]));
+
+    await expect(validator.initBitMapValues([0xa])).to.be.revertedWith("BitmapValidator: already inited");
+  });
+
+  it("Mannually init after constructor", async () => {
+    const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy();
+    await waitForTx(await validator.initialize(testCollection.address, []));
+
+    await waitForTx(await validator.initBitMapValues([0xa]));
+
+    const tokenId1Valid = await validator.isValid(testCollection.address, 1);
+    expect(tokenId1Valid).to.be.eq(true);
+
+    const tokenId2Valid = await validator.isValid(testCollection.address, 2);
+    expect(tokenId2Valid).to.be.eq(false);
+
+    const key0Value = await validator.viewBitMapValue(0);
+    expect(key0Value).to.be.eq(0xa);
+
+    const keyCount = await validator.viewBitMapKeyCount();
+    expect(keyCount).to.be.eq(1);
+
+    const keys = await validator.viewBitmapKeys(0, keyCount);
+    expect(keys[0].length).to.be.eq(1);
+  });
+
   it("Enable and disable token ids", async () => {
     const validator = await (await ethers.getContractFactory("BitmapValidator")).deploy();
     await waitForTx(await validator.initialize(testCollection.address, []));
