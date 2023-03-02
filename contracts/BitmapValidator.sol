@@ -7,6 +7,9 @@ import {BitMaps} from "./libraries/BitMaps.sol";
 import {IWrapperValidator} from "./interfaces/IWrapperValidator.sol";
 
 contract BitmapValidator is IWrapperValidator, OwnableUpgradeable {
+    event BitMapValueUpdated(address indexed asset, uint256 key, uint256 value);
+    event TokenIdUpdated(address indexed asset, uint256 tokenId, bool enabled);
+
     struct KeyEntry {
         uint256 key;
         uint256 value;
@@ -37,22 +40,30 @@ contract BitmapValidator is IWrapperValidator, OwnableUpgradeable {
         for (uint256 i = 0; i < entries.length; i++) {
             KeyEntry memory entry = entries[i];
             _bitmap.setValue(entry.key, entry.value);
+
+            emit BitMapValueUpdated(underlyingToken, entry.key, entry.value);
         }
     }
 
     function setBitMapValue(uint256 key, uint256 value) external onlyOwner {
         _bitmap.setValue(key, value);
+
+        emit BitMapValueUpdated(underlyingToken, key, value);
     }
 
     function enableTokenIds(uint256[] calldata tokenIds) external onlyOwner {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             _bitmap.set(tokenIds[i]);
+
+            emit TokenIdUpdated(underlyingToken, tokenIds[i], true);
         }
     }
 
     function disableTokenIds(uint256[] calldata tokenIds) external onlyOwner {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             _bitmap.unset(tokenIds[i]);
+
+            emit TokenIdUpdated(underlyingToken, tokenIds[i], false);
         }
     }
 
