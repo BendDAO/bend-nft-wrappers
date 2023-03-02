@@ -23,17 +23,19 @@ contract WrapperRegistry is IWrapperRegistry, OwnableUpgradeable, ReentrancyGuar
         __Ownable_init();
     }
 
-    function registerWrapper(address wrapper) external override onlyOwner {
+    function registerWrapper(address wrapper) external override nonReentrant onlyOwner {
         require(!isRegistered(wrapper), "WrapperRegistry: wrapper already registered");
         _registereds[wrapper] = true;
-        _wrappers[address(IERC721Wrapper(wrapper).underlyingToken())].add(wrapper);
+        bool ret = _wrappers[address(IERC721Wrapper(wrapper).underlyingToken())].add(wrapper);
+        require(ret, "WrapperRegistry: add wrapper failed");
         emit WrapperRegistered(wrapper);
     }
 
-    function unregisterWrapper(address wrapper) external override onlyOwner {
+    function unregisterWrapper(address wrapper) external override nonReentrant onlyOwner {
         require(isRegistered(wrapper), "WrapperRegistry: wrapper not registered");
-        _wrappers[address(IERC721Wrapper(wrapper).underlyingToken())].remove(wrapper);
         _registereds[wrapper] = false;
+        bool ret = _wrappers[address(IERC721Wrapper(wrapper).underlyingToken())].remove(wrapper);
+        require(ret, "WrapperRegistry: remove wrapper failed");
         emit WrapperUnregistered(wrapper);
     }
 
@@ -78,6 +80,9 @@ contract WrapperRegistry is IWrapperRegistry, OwnableUpgradeable, ReentrancyGuar
         uint256 size
     ) external view override returns (address[] memory, uint256) {
         EnumerableSetUpgradeable.AddressSet storage collectionWrappers = _wrappers[collection];
+        require(cursor < collectionWrappers.length(), "WrapperRegistry: cursor out of range");
+        require(size > 0, "WrapperRegistry: size must be greater than 0");
+
         uint256 length = size;
         if (length > collectionWrappers.length() - cursor) {
             length = collectionWrappers.length() - cursor;
