@@ -54,7 +54,7 @@ task("deploy:MoonbirdsWrapper", "Deploy moonbirds wrapper").setAction(async (_, 
 
   const moonbirdsWrapper = await deployProxyContract(
     "MoonbirdsWrapper",
-    [moonbirds, validator.address, "Moonbirds Wrapper", "WMOONBIRD"],
+    [moonbirds, validator.address, "Wrapped Moonbirds", "WMOONBIRD"],
     true
   );
   console.log("MoonbirdsWrapper:", moonbirdsWrapper.address);
@@ -88,7 +88,7 @@ task("deploy:Otherdeed:KodaWrapper", "Deploy koda wrapper").setAction(async (_, 
   const kodaWrapper = await deployProxyContractWithID(
     "KodaWrapper",
     "KodaWrapper",
-    [otherdeed, validator.address, "Otherdeed Koda Wrapper", "WKODA"],
+    [otherdeed, validator.address, "Wrapped Otherdeed Koda", "WKODA"],
     true
   );
   console.log("KodaWrapper:", kodaWrapper.address);
