@@ -105,6 +105,9 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
   it("User successfully mint for land with koda", async () => {
     const user0 = env.accounts[0];
 
+    const totalSupplyBeforeMint = await contracts.kodaWrapper.totalSupply();
+    const userBalanceBeforeMint = await contracts.kodaWrapper.balanceOf(user0.address);
+
     // mint
     await waitForTx(await contracts.kodaWrapper.connect(user0).mint(landIdWithKoda));
 
@@ -116,6 +119,18 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
 
     const tokenUrl = await contracts.kodaWrapper.tokenURI(landIdWithKoda);
     expect(tokenUrl.length).to.be.gt(0);
+
+    const totalSupplyAfterMint = await contracts.kodaWrapper.totalSupply();
+    expect(totalSupplyAfterMint).to.be.eq(totalSupplyBeforeMint.add(1));
+
+    const userBalanceAfterMint = await contracts.kodaWrapper.balanceOf(user0.address);
+    expect(userBalanceAfterMint).to.be.eq(userBalanceBeforeMint.add(1));
+
+    const totalIdByIndexAfterMint = await contracts.kodaWrapper.tokenByIndex(totalSupplyAfterMint.sub(1));
+    expect(totalIdByIndexAfterMint).to.be.eq(landIdWithKoda);
+
+    const userTotalIdByIndexAfterMint = await contracts.kodaWrapper.tokenByIndex(userBalanceAfterMint.sub(1));
+    expect(userTotalIdByIndexAfterMint).to.be.eq(landIdWithKoda);
   });
 
   it("User without permission failed to enabled flash loan (revert expected)", async () => {

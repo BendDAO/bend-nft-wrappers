@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {IERC721MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
@@ -20,7 +21,7 @@ contract MoonbirdsWrapper is
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
     PausableUpgradeable,
-    ERC721Upgradeable
+    ERC721EnumerableUpgradeable
 {
     IERC721MetadataUpgradeable public override underlyingToken;
     IWrapperValidator public override validator;
@@ -58,7 +59,7 @@ contract MoonbirdsWrapper is
         public
         view
         virtual
-        override(ERC721Upgradeable, IERC165Upgradeable)
+        override(ERC721EnumerableUpgradeable, IERC165Upgradeable)
         returns (bool)
     {
         return interfaceId == type(IERC721Wrapper).interfaceId || super.supportsInterface(interfaceId);
