@@ -14,6 +14,7 @@ import {IERC721Wrapper} from "../interfaces/IERC721Wrapper.sol";
 import {IWrapperValidator} from "../interfaces/IWrapperValidator.sol";
 import {IFlashLoanReceiver} from "../interfaces/IFlashLoanReceiver.sol";
 import {IMoonbirds} from "./IMoonbirds.sol";
+import {IDelegationRegistry} from "../interfaces/IDelegationRegistry.sol";
 
 contract MoonbirdsWrapper is
     IERC721Wrapper,
@@ -29,9 +30,18 @@ contract MoonbirdsWrapper is
     address private _currentFlashLoanMsgSender;
     bool public override isFlashLoanEnabled;
     bool public override isMintEnabled;
+    address public override delegateCashContract;
+    // Mapping from token to delegate cash
+    mapping(uint256 => bool) private _hasDelegateCashes;
+    bool public override isOwnershipDelegateEnabled;
 
     modifier whenFlashLoanEnabled() {
         require(isFlashLoanEnabled, "MoonbirdsWrapper: flash loan disabled");
+        _;
+    }
+
+    modifier whenOwnershipDelegateEnabled() {
+        require(isOwnershipDelegateEnabled, "MoonbirdsWrapper: ownership delegate disabled");
         _;
     }
 
@@ -53,6 +63,7 @@ contract MoonbirdsWrapper is
         underlyingToken = underlyingToken_;
         validator = validator_;
         isMintEnabled = true;
+        isOwnershipDelegateEnabled = true;
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -112,6 +123,8 @@ contract MoonbirdsWrapper is
         require(_msgSender() == ownerOf(tokenId), "MoonbirdsWrapper: only owner can burn");
 
         require(address(this) == underlyingToken.ownerOf(tokenId), "MoonbirdsWrapper: invalid token owner");
+
+        _removeDelegateCashForToken(_msgSender(), tokenId);
 
         _burn(tokenId);
 
@@ -189,5 +202,53 @@ contract MoonbirdsWrapper is
         returns (string memory)
     {
         return underlyingToken.tokenURI(tokenId);
+    }
+
+    function setOwnershipDelegateEnabled(bool value) public onlyOwner {
+        isOwnershipDelegateEnabled = value;
+
+        emit OwnershipDelegateEnabled(value);
+    }
+
+    function setDelegateCashContract(address newDelegateCash) public virtual onlyOwner {
+        require(newDelegateCash != address(0), "BNFTR: new contract is the zero address");
+        address oldDelegateCash = delegateCashContract;
+        delegateCashContract = newDelegateCash;
+        emit DelegateCashUpdated(oldDelegateCash, newDelegateCash);
+    }
+
+    function hasDelegateCashForToken(uint256 tokenId) public view override returns (bool) {
+        return _hasDelegateCashes[tokenId];
+    }
+
+    function setDelegateCashForToken(uint256[] calldata tokenIds, bool value)
+        public
+        override
+        nonReentrant
+        whenOwnershipDelegateEnabled
+    {
+        IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            address tokenOwner = ERC721Upgradeable.ownerOf(tokenIds[i]);
+            require(tokenOwner == _msgSender(), "BNFT: caller is not owner");
+
+            delegateContract.delegateForToken(tokenOwner, address(underlyingToken), tokenIds[i], value);
+
+            _hasDelegateCashes[tokenIds[i]] = value;
+
+            emit DelegateCashForTokenUpdated(tokenIds[i], value);
+        }
+    }
+
+    function _removeDelegateCashForToken(address tokenOwner, uint256 tokenId) internal {
+        if (_hasDelegateCashes[tokenId]) {
+            IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+
+            delegateContract.delegateForToken(tokenOwner, address(underlyingToken), tokenId, false);
+            _hasDelegateCashes[tokenId] = false;
+
+            emit DelegateCashForTokenUpdated(tokenId, false);
+        }
     }
 }

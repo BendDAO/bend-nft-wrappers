@@ -203,8 +203,50 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     expect(wBirdOwner1).to.be.eq(user0.address);
   });
 
+  it("User without permission failed to set delegate cash contract (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(contracts.kodaWrapper.connect(user5).setDelegateCashContract(user5.address)).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
+  });
+
+  it("User without permission failed to set delegate enabled (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(contracts.kodaWrapper.connect(user5).setOwnershipDelegateEnabled(true)).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
+  });
+
+  it("User failed set delegate for token (revert expected)", async () => {
+    const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.kodaWrapper.connect(user0).setOwnershipDelegateEnabled(false));
+
+    await expect(
+      contracts.kodaWrapper.connect(user0).setDelegateCashForToken([landIdWithKoda], true)
+    ).to.be.revertedWith("ERC721Wrapper: ownership delegate disabled");
+
+    await waitForTx(await contracts.kodaWrapper.connect(user0).setOwnershipDelegateEnabled(true));
+  });
+
+  it("User set delegate for token", async () => {
+    const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.kodaWrapper.connect(user0).setDelegateCashForToken([landIdWithKoda], true));
+    const hasDelegate1 = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
+    expect(hasDelegate1).to.be.eq(true);
+
+    await waitForTx(await contracts.kodaWrapper.connect(user0).setDelegateCashForToken([landIdWithKoda], false));
+    const hasDelegate2 = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
+    expect(hasDelegate2).to.be.eq(false);
+  });
+
   it("User successfully burn for land with koda", async () => {
     const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.kodaWrapper.connect(user0).setDelegateCashForToken([landIdWithKoda], true));
 
     // burn
     await waitForTx(await contracts.kodaWrapper.connect(user0).burn(landIdWithKoda));
@@ -215,5 +257,8 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     await expect(contracts.kodaWrapper.ownerOf(landIdWithKoda)).to.be.revertedWith(
       "ERC721: owner query for nonexistent token"
     );
+
+    const hasDelegate = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
+    expect(hasDelegate).to.be.eq(false);
   });
 });

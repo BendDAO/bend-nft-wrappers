@@ -13,7 +13,7 @@ import {
 import { getParams, Moonbirds } from "./config";
 import { waitForTx } from "../tasks/utils/helpers";
 import { constants } from "ethers";
-import { MockMoonbirds } from "../typechain-types/contracts/mocks";
+import { MockDelegationRegistry, MockMoonbirds } from "../typechain-types/contracts/mocks";
 import { MockMoonbirdsFlashLoanReceiver } from "../typechain-types/contracts/mocks/MockMoonbirdsFlashLoanReceiver";
 import { MockFlashLoanReceiver } from "../typechain-types/contracts/mocks/MockFlashLoanReceiver";
 
@@ -44,6 +44,9 @@ export interface Contracts {
   moonbirdsValidator: MoonbirdsValidator;
   moonbirdsWrapper: MoonbirdsWrapper;
   mockMoonbirdsFlashLoanReceiver: MockMoonbirdsFlashLoanReceiver;
+
+  // Delegate Cash
+  mockDelegateCash: MockDelegationRegistry;
 }
 
 export async function setupEnv(env: Env, contracts: Contracts): Promise<void> {
@@ -114,6 +117,12 @@ export async function setupContracts(): Promise<Contracts> {
   const moonbirdsReceiverFactory = await ethers.getContractFactory("MockMoonbirdsFlashLoanReceiver");
   const mockMoonbirdsFlashLoanReceiver = await moonbirdsReceiverFactory.deploy();
 
+  const mockDelegateCashFactory = await ethers.getContractFactory("MockDelegationRegistry");
+  const mockDelegateCash = await mockDelegateCashFactory.deploy();
+
+  await waitForTx(await kodaWrapper.setDelegateCashContract(mockDelegateCash.address));
+  await waitForTx(await moonbirdsWrapper.setDelegateCashContract(mockDelegateCash.address));
+
   /** Return contracts
    */
   return {
@@ -133,6 +142,8 @@ export async function setupContracts(): Promise<Contracts> {
     moonbirdsValidator,
     moonbirdsWrapper,
     mockMoonbirdsFlashLoanReceiver,
+
+    mockDelegateCash,
   } as Contracts;
 }
 
