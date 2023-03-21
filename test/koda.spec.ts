@@ -219,7 +219,7 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     );
   });
 
-  it("User failed set delegate for token (revert expected)", async () => {
+  it("User failed set delegate for token when delegate disabled (revert expected)", async () => {
     const user0 = env.accounts[0];
 
     await waitForTx(await contracts.kodaWrapper.connect(user0).setOwnershipDelegateEnabled(false));
@@ -229,6 +229,14 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     ).to.be.revertedWith("ERC721Wrapper: ownership delegate disabled");
 
     await waitForTx(await contracts.kodaWrapper.connect(user0).setOwnershipDelegateEnabled(true));
+  });
+
+  it("User failed set delegate for token when not owner (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(
+      contracts.kodaWrapper.connect(user5).setDelegateCashForToken([landIdWithKoda], true)
+    ).to.be.revertedWith("ERC721Wrapper: caller is not owner");
   });
 
   it("User set delegate for token", async () => {

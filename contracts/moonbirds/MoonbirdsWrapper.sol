@@ -211,7 +211,7 @@ contract MoonbirdsWrapper is
     }
 
     function setDelegateCashContract(address newDelegateCash) public virtual onlyOwner {
-        require(newDelegateCash != address(0), "BNFTR: new contract is the zero address");
+        require(newDelegateCash != address(0), "MoonbirdsWrapper: new contract is the zero address");
         address oldDelegateCash = delegateCashContract;
         delegateCashContract = newDelegateCash;
         emit DelegateCashUpdated(oldDelegateCash, newDelegateCash);
@@ -231,7 +231,7 @@ contract MoonbirdsWrapper is
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             address tokenOwner = ERC721Upgradeable.ownerOf(tokenIds[i]);
-            require(tokenOwner == _msgSender(), "BNFT: caller is not owner");
+            require(tokenOwner == _msgSender(), "MoonbirdsWrapper: caller is not owner");
 
             delegateContract.delegateForToken(tokenOwner, address(underlyingToken), tokenIds[i], value);
 

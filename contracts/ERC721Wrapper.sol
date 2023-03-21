@@ -23,6 +23,7 @@ contract ERC721Wrapper is
     PausableUpgradeable,
     ERC721Upgradeable
 {
+    ////////////////////////////////////////////////////////////////////////////
     IERC721MetadataUpgradeable public override underlyingToken;
     IWrapperValidator public override validator;
     bool public override isFlashLoanEnabled;
@@ -53,6 +54,7 @@ contract ERC721Wrapper is
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
     uint256[39] private __gap;
+    ////////////////////////////////////////////////////////////////////////////
 
     modifier whenFlashLoanEnabled() {
         require(isFlashLoanEnabled, "ERC721Wrapper: flash loan disabled");
@@ -351,7 +353,7 @@ contract ERC721Wrapper is
     }
 
     function setDelegateCashContract(address newDelegateCash) public virtual onlyOwner {
-        require(newDelegateCash != address(0), "BNFTR: new contract is the zero address");
+        require(newDelegateCash != address(0), "ERC721Wrapper: new contract is the zero address");
         address oldDelegateCash = delegateCashContract;
         delegateCashContract = newDelegateCash;
         emit DelegateCashUpdated(oldDelegateCash, newDelegateCash);
@@ -371,7 +373,7 @@ contract ERC721Wrapper is
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             address tokenOwner = ERC721Upgradeable.ownerOf(tokenIds[i]);
-            require(tokenOwner == _msgSender(), "BNFT: caller is not owner");
+            require(tokenOwner == _msgSender(), "ERC721Wrapper: caller is not owner");
 
             delegateContract.delegateForToken(tokenOwner, address(underlyingToken), tokenIds[i], value);
 

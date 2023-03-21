@@ -225,7 +225,7 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     );
   });
 
-  it("User failed set delegate for token (revert expected)", async () => {
+  it("User failed set delegate for token when delegate disabled (revert expected)", async () => {
     const user0 = env.accounts[0];
 
     await waitForTx(await contracts.moonbirdsWrapper.connect(user0).setOwnershipDelegateEnabled(false));
@@ -235,6 +235,14 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     ).to.be.revertedWith("MoonbirdsWrapper: ownership delegate disabled");
 
     await waitForTx(await contracts.moonbirdsWrapper.connect(user0).setOwnershipDelegateEnabled(true));
+  });
+
+  it("User failed set delegate for token when not owner (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(
+      contracts.moonbirdsWrapper.connect(user5).setDelegateCashForToken([birdIdWithNesting], true)
+    ).to.be.revertedWith("MoonbirdsWrapper: caller is not owner");
   });
 
   it("User set delegate for token", async () => {
