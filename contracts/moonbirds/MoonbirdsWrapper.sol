@@ -210,6 +210,20 @@ contract MoonbirdsWrapper is
         emit OwnershipDelegateEnabled(value);
     }
 
+    function revokeAllDelegateCash() public onlyOwner {
+        IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+
+        uint256 totalTokens = totalSupply();
+        for (uint256 i = 0; i < totalTokens; i++) {
+            uint256 tokenId = tokenByIndex(i);
+            _hasDelegateCashes[tokenId] = false;
+        }
+
+        delegateContract.revokeAllDelegates();
+
+        emit AllDelegateCashRevoked();
+    }
+
     function setDelegateCashContract(address newDelegateCash) public virtual onlyOwner {
         require(newDelegateCash != address(0), "MoonbirdsWrapper: new contract is the zero address");
         address oldDelegateCash = delegateCashContract;

@@ -20,4 +20,9 @@ interface IDelegationRegistry {
         uint256 tokenId,
         bool value
     ) external;
+
+    /**
+     * @notice Revoke all delegates
+     */
+    function revokeAllDelegates() external;
 }

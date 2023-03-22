@@ -219,6 +219,14 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     );
   });
 
+  it("User without permission failed to revoke all delegations (revert expected)", async () => {
+    const user5 = env.accounts[5];
+
+    await expect(contracts.kodaWrapper.connect(user5).revokeAllDelegateCash()).to.be.revertedWith(
+      "Ownable: caller is not the owner"
+    );
+  });
+
   it("User failed set delegate for token when delegate disabled (revert expected)", async () => {
     const user0 = env.accounts[0];
 
@@ -247,6 +255,19 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     expect(hasDelegate1).to.be.eq(true);
 
     await waitForTx(await contracts.kodaWrapper.connect(user0).setDelegateCashForToken([landIdWithKoda], false));
+    const hasDelegate2 = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
+    expect(hasDelegate2).to.be.eq(false);
+  });
+
+  it("Admin revoke all delegate", async () => {
+    const user0 = env.accounts[0];
+
+    await waitForTx(await contracts.kodaWrapper.connect(user0).setDelegateCashForToken([landIdWithKoda], true));
+    const hasDelegate1 = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
+    expect(hasDelegate1).to.be.eq(true);
+
+    await waitForTx(await contracts.kodaWrapper.connect(user0).revokeAllDelegateCash());
+
     const hasDelegate2 = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
     expect(hasDelegate2).to.be.eq(false);
   });

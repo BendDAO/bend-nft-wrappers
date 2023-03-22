@@ -12,6 +12,7 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
     event DelegateCashUpdated(address oldDelegateCash, address newDelegateCash);
     event DelegateCashForTokenUpdated(uint256 tokenId, bool value);
     event OwnershipDelegateEnabled(bool enabled);
+    event AllDelegateCashRevoked();
 
     function underlyingToken() external view returns (IERC721MetadataUpgradeable);
 
