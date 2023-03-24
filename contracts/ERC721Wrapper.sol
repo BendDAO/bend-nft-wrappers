@@ -4,6 +4,8 @@ pragma solidity 0.8.9;
 import {IERC721Wrapper} from "./interfaces/IERC721Wrapper.sol";
 import {IWrapperValidator} from "./interfaces/IWrapperValidator.sol";
 import {IFlashLoanReceiver} from "./interfaces/IFlashLoanReceiver.sol";
+import {IDelegationRegistry} from "./interfaces/IDelegationRegistry.sol";
+import {IBNFTRegistry} from "./interfaces/IBNFTRegistry.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -22,6 +24,7 @@ contract ERC721Wrapper is
     PausableUpgradeable,
     ERC721Upgradeable
 {
+    ////////////////////////////////////////////////////////////////////////////
     IERC721MetadataUpgradeable public override underlyingToken;
     IWrapperValidator public override validator;
     bool public override isFlashLoanEnabled;
@@ -41,13 +44,20 @@ contract ERC721Wrapper is
     // Mapping from token id to position in the allTokens array
     mapping(uint256 => uint256) private _allTokensIndex;
     ////////////////////////////////////////////////////////////////////////////
+    address public override delegateCashContract;
+    // Mapping from token to delegate cash
+    mapping(uint256 => bool) private _hasDelegateCashes;
+    bool public override isOwnershipDelegateEnabled;
+    mapping(uint256 => address) private _delegateAddresses;
+    address public override bnftRegistry;
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[42] private __gap;
+    uint256[37] private __gap;
+    ////////////////////////////////////////////////////////////////////////////
 
     modifier whenFlashLoanEnabled() {
         require(isFlashLoanEnabled, "ERC721Wrapper: flash loan disabled");
@@ -56,6 +66,11 @@ contract ERC721Wrapper is
 
     modifier whenMintEnabled() {
         require(isMintEnabled, "ERC721Wrapper: mint disabled");
+        _;
+    }
+
+    modifier whenOwnershipDelegateEnabled() {
+        require(isOwnershipDelegateEnabled, "ERC721Wrapper: ownership delegate disabled");
         _;
     }
 
@@ -75,6 +90,7 @@ contract ERC721Wrapper is
         validator = validator_;
 
         isMintEnabled = true;
+        isOwnershipDelegateEnabled = true;
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -123,6 +139,8 @@ contract ERC721Wrapper is
         require(_msgSender() == ownerOf(tokenId), "ERC721Wrapper: only owner can burn");
         address owner = underlyingToken.ownerOf(tokenId);
         require(address(this) == owner, "ERC721Wrapper: invalid tokenId");
+
+        _removeDelegateCashForToken(tokenId);
 
         underlyingToken.safeTransferFrom(address(this), _msgSender(), tokenId);
         _burn(tokenId);
@@ -327,6 +345,113 @@ contract ERC721Wrapper is
         delete _allTokensIndex[tokenId];
         _allTokens.pop();
     }
+
     // Above code copied from ERC721EnumerableUpgradeable.sol
     ////////////////////////////////////////////////////////////////////////////
+
+    function setBNFTRegistryContract(address newRegistry) public virtual onlyOwner {
+        require(newRegistry != address(0), "ERC721Wrapper: new contract is the zero address");
+        address oldRegistry = bnftRegistry;
+        bnftRegistry = newRegistry;
+        emit BNFTRegistryUpdated(oldRegistry, newRegistry);
+    }
+
+    function setOwnershipDelegateEnabled(bool value) public onlyOwner {
+        isOwnershipDelegateEnabled = value;
+
+        emit OwnershipDelegateEnabled(value);
+    }
+
+    function revokeAllDelegateCash() public onlyOwner {
+        IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+
+        uint256 totalTokens = totalSupply();
+        for (uint256 i = 0; i < totalTokens; i++) {
+            uint256 tokenId = tokenByIndex(i);
+            _hasDelegateCashes[tokenId] = false;
+            _delegateAddresses[tokenId] = address(0);
+        }
+
+        delegateContract.revokeAllDelegates();
+
+        emit AllDelegateCashRevoked();
+    }
+
+    function setDelegateCashContract(address newDelegateCash) public virtual onlyOwner {
+        require(newDelegateCash != address(0), "ERC721Wrapper: new contract is the zero address");
+        address oldDelegateCash = delegateCashContract;
+        delegateCashContract = newDelegateCash;
+        emit DelegateCashUpdated(oldDelegateCash, newDelegateCash);
+    }
+
+    function hasDelegateCashForToken(uint256 tokenId) public view override returns (bool) {
+        return _hasDelegateCashes[tokenId];
+    }
+
+    function getDelegateCashForToken(uint256 tokenId) public view override returns (address) {
+        return _delegateAddresses[tokenId];
+    }
+
+    function setDelegateCashForToken(uint256[] calldata tokenIds, bool value)
+        public
+        override
+        nonReentrant
+        whenOwnershipDelegateEnabled
+    {
+        _setDelegateCashForToken(_msgSender(), tokenIds, value);
+    }
+
+    function setDelegateCashForToken(
+        address delegate,
+        uint256[] calldata tokenIds,
+        bool value
+    ) public override nonReentrant whenOwnershipDelegateEnabled {
+        _setDelegateCashForToken(delegate, tokenIds, value);
+    }
+
+    function _setDelegateCashForToken(
+        address delegate,
+        uint256[] calldata tokenIds,
+        bool value
+    ) internal {
+        IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+        (address bnftProxy, ) = IBNFTRegistry(bnftRegistry).getBNFTAddresses(address(this));
+
+        require(delegate != address(0), "ERC721Wrapper: delegate is the zero address");
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            address tokenOwner = ERC721Upgradeable.ownerOf(tokenIds[i]);
+            if (bnftProxy == tokenOwner) {
+                tokenOwner = IERC721MetadataUpgradeable(bnftProxy).ownerOf(tokenIds[i]);
+            }
+            require(tokenOwner == _msgSender(), "ERC721Wrapper: caller is not owner");
+
+            address oldDelegate = _delegateAddresses[tokenIds[i]];
+            require((oldDelegate == address(0)) || (oldDelegate == delegate), "ERC721Wrapper: delegate not same");
+
+            delegateContract.delegateForToken(delegate, address(underlyingToken), tokenIds[i], value);
+
+            _hasDelegateCashes[tokenIds[i]] = value;
+            if (value) {
+                _delegateAddresses[tokenIds[i]] = delegate;
+            } else {
+                _delegateAddresses[tokenIds[i]] = address(0);
+            }
+
+            emit DelegateCashForTokenV11Updated(delegate, tokenIds[i], value);
+        }
+    }
+
+    function _removeDelegateCashForToken(uint256 tokenId) internal {
+        if (_hasDelegateCashes[tokenId]) {
+            IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+            address oldDelegate = _delegateAddresses[tokenId];
+
+            delegateContract.delegateForToken(oldDelegate, address(underlyingToken), tokenId, false);
+            _hasDelegateCashes[tokenId] = false;
+            _delegateAddresses[tokenId] = address(0);
+
+            emit DelegateCashForTokenV11Updated(oldDelegate, tokenId, false);
+        }
+    }
 }

@@ -9,6 +9,12 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
     event ValidatorUpdated(address indexed previousValidator, address indexed currentValidator);
     event FlashLoanEnabled(bool enabled);
     event MintEnabled(bool enabled);
+    event DelegateCashUpdated(address oldDelegateCash, address newDelegateCash);
+    event DelegateCashForTokenUpdated(uint256 tokenId, bool value); // obsolete
+    event DelegateCashForTokenV11Updated(address delegate, uint256 tokenId, bool value);
+    event OwnershipDelegateEnabled(bool enabled);
+    event AllDelegateCashRevoked();
+    event BNFTRegistryUpdated(address oldRegistry, address newRegistry);
 
     function underlyingToken() external view returns (IERC721MetadataUpgradeable);
 
@@ -17,6 +23,10 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
     function isFlashLoanEnabled() external view returns (bool);
 
     function isMintEnabled() external view returns (bool);
+
+    function isOwnershipDelegateEnabled() external view returns (bool);
+
+    function bnftRegistry() external view returns (address);
 
     function updateValidator(address validator) external;
 
@@ -28,5 +38,19 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
         address receiverAddress,
         uint256[] calldata tokenIds,
         bytes calldata params
+    ) external;
+
+    function delegateCashContract() external view returns (address);
+
+    function hasDelegateCashForToken(uint256 tokenId) external view returns (bool);
+
+    function getDelegateCashForToken(uint256 tokenId) external view returns (address);
+
+    function setDelegateCashForToken(uint256[] calldata tokenIds, bool value) external;
+
+    function setDelegateCashForToken(
+        address delegate,
+        uint256[] calldata tokenIds,
+        bool value
     ) external;
 }

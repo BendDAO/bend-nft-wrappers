@@ -82,6 +82,14 @@ export const deployProxyContractWithID = async (
   return instance;
 };
 
+export const deployNewImplmentation = async (contractName: string, verify?: boolean): Promise<Contract> => {
+  const impl = await (await DRE.ethers.getContractFactory(contractName)).connect(await getDeploySigner()).deploy();
+  if (verify) {
+    await verifyEtherscanContract(impl.address, []);
+  }
+  return impl;
+};
+
 export const withSaveAndVerify = async (
   instance: Contract,
   id: string,

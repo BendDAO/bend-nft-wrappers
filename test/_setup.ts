@@ -13,7 +13,7 @@ import {
 import { getParams, Moonbirds } from "./config";
 import { waitForTx } from "../tasks/utils/helpers";
 import { constants } from "ethers";
-import { MockMoonbirds } from "../typechain-types/contracts/mocks";
+import { MockBNFT, MockBNFTRegistry, MockDelegationRegistry, MockMoonbirds } from "../typechain-types/contracts/mocks";
 import { MockMoonbirdsFlashLoanReceiver } from "../typechain-types/contracts/mocks/MockMoonbirdsFlashLoanReceiver";
 import { MockFlashLoanReceiver } from "../typechain-types/contracts/mocks/MockFlashLoanReceiver";
 
@@ -44,6 +44,14 @@ export interface Contracts {
   moonbirdsValidator: MoonbirdsValidator;
   moonbirdsWrapper: MoonbirdsWrapper;
   mockMoonbirdsFlashLoanReceiver: MockMoonbirdsFlashLoanReceiver;
+
+  // Delegate Cash
+  mockDelegateCash: MockDelegationRegistry;
+
+  // BNFTRegistry
+  mockBNFTRegistry: MockBNFTRegistry;
+  mockWKodaBNFT: MockBNFT;
+  mockWMBirdBNFT: MockBNFT;
 }
 
 export async function setupEnv(env: Env, contracts: Contracts): Promise<void> {
@@ -114,6 +122,33 @@ export async function setupContracts(): Promise<Contracts> {
   const moonbirdsReceiverFactory = await ethers.getContractFactory("MockMoonbirdsFlashLoanReceiver");
   const mockMoonbirdsFlashLoanReceiver = await moonbirdsReceiverFactory.deploy();
 
+  const mockDelegateCashFactory = await ethers.getContractFactory("MockDelegationRegistry");
+  const mockDelegateCash = await mockDelegateCashFactory.deploy();
+
+  await waitForTx(await kodaWrapper.setDelegateCashContract(mockDelegateCash.address));
+  await waitForTx(await moonbirdsWrapper.setDelegateCashContract(mockDelegateCash.address));
+
+  // mocks for bnft
+  const mockBNFTRegistryFactory = await ethers.getContractFactory("MockBNFTRegistry");
+  const mockBNFTRegistry = await mockBNFTRegistryFactory.deploy();
+
+  const mockWKodaBNFT = await (
+    await ethers.getContractFactory("MockBNFT")
+  ).deploy(kodaWrapper.address, "Bound NFT WKODA", "boundWKODA");
+  await waitForTx(
+    await mockBNFTRegistry.setBNFTAddresses(kodaWrapper.address, mockWKodaBNFT.address, mockWKodaBNFT.address)
+  );
+
+  const mockWMBirdBNFT = await (
+    await ethers.getContractFactory("MockBNFT")
+  ).deploy(moonbirdsWrapper.address, "Bound NFT WMBIRD", "boundWMBIRD");
+  await waitForTx(
+    await mockBNFTRegistry.setBNFTAddresses(moonbirdsWrapper.address, mockWMBirdBNFT.address, mockWMBirdBNFT.address)
+  );
+
+  await waitForTx(await kodaWrapper.setBNFTRegistryContract(mockBNFTRegistry.address));
+  await waitForTx(await moonbirdsWrapper.setBNFTRegistryContract(mockBNFTRegistry.address));
+
   /** Return contracts
    */
   return {
@@ -133,6 +168,12 @@ export async function setupContracts(): Promise<Contracts> {
     moonbirdsValidator,
     moonbirdsWrapper,
     mockMoonbirdsFlashLoanReceiver,
+
+    mockDelegateCash,
+
+    mockBNFTRegistry,
+    mockWKodaBNFT,
+    mockWMBirdBNFT,
   } as Contracts;
 }
 
