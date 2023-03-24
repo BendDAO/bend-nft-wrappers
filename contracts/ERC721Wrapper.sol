@@ -5,6 +5,7 @@ import {IERC721Wrapper} from "./interfaces/IERC721Wrapper.sol";
 import {IWrapperValidator} from "./interfaces/IWrapperValidator.sol";
 import {IFlashLoanReceiver} from "./interfaces/IFlashLoanReceiver.sol";
 import {IDelegationRegistry} from "./interfaces/IDelegationRegistry.sol";
+import {IBNFTRegistry} from "./interfaces/IBNFTRegistry.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -48,13 +49,14 @@ contract ERC721Wrapper is
     mapping(uint256 => bool) private _hasDelegateCashes;
     bool public override isOwnershipDelegateEnabled;
     mapping(uint256 => address) private _delegateAddresses;
+    address public override bnftRegistry;
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[38] private __gap;
+    uint256[37] private __gap;
     ////////////////////////////////////////////////////////////////////////////
 
     modifier whenFlashLoanEnabled() {
@@ -347,6 +349,13 @@ contract ERC721Wrapper is
     // Above code copied from ERC721EnumerableUpgradeable.sol
     ////////////////////////////////////////////////////////////////////////////
 
+    function setBNFTRegistryContract(address newRegistry) public virtual onlyOwner {
+        require(newRegistry != address(0), "ERC721Wrapper: new contract is the zero address");
+        address oldRegistry = bnftRegistry;
+        bnftRegistry = newRegistry;
+        emit BNFTRegistryUpdated(oldRegistry, newRegistry);
+    }
+
     function setOwnershipDelegateEnabled(bool value) public onlyOwner {
         isOwnershipDelegateEnabled = value;
 
@@ -406,11 +415,15 @@ contract ERC721Wrapper is
         bool value
     ) internal {
         IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+        (address bnftProxy, ) = IBNFTRegistry(bnftRegistry).getBNFTAddresses(address(this));
 
         require(delegate != address(0), "ERC721Wrapper: delegate is the zero address");
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             address tokenOwner = ERC721Upgradeable.ownerOf(tokenIds[i]);
+            if (bnftProxy == tokenOwner) {
+                tokenOwner = IERC721MetadataUpgradeable(bnftProxy).ownerOf(tokenIds[i]);
+            }
             require(tokenOwner == _msgSender(), "ERC721Wrapper: caller is not owner");
 
             address oldDelegate = _delegateAddresses[tokenIds[i]];

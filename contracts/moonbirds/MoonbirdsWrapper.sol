@@ -15,6 +15,7 @@ import {IWrapperValidator} from "../interfaces/IWrapperValidator.sol";
 import {IFlashLoanReceiver} from "../interfaces/IFlashLoanReceiver.sol";
 import {IMoonbirds} from "./IMoonbirds.sol";
 import {IDelegationRegistry} from "../interfaces/IDelegationRegistry.sol";
+import {IBNFTRegistry} from "../interfaces/IBNFTRegistry.sol";
 
 contract MoonbirdsWrapper is
     IERC721Wrapper,
@@ -35,6 +36,7 @@ contract MoonbirdsWrapper is
     mapping(uint256 => bool) private _hasDelegateCashes;
     bool public override isOwnershipDelegateEnabled;
     mapping(uint256 => address) private _delegateAddresses;
+    address public override bnftRegistry;
 
     modifier whenFlashLoanEnabled() {
         require(isFlashLoanEnabled, "MoonbirdsWrapper: flash loan disabled");
@@ -205,6 +207,13 @@ contract MoonbirdsWrapper is
         return underlyingToken.tokenURI(tokenId);
     }
 
+    function setBNFTRegistryContract(address newRegistry) public virtual onlyOwner {
+        require(newRegistry != address(0), "MoonbirdsWrapper: new contract is the zero address");
+        address oldRegistry = bnftRegistry;
+        bnftRegistry = newRegistry;
+        emit BNFTRegistryUpdated(oldRegistry, newRegistry);
+    }
+
     function setOwnershipDelegateEnabled(bool value) public onlyOwner {
         isOwnershipDelegateEnabled = value;
 
@@ -264,11 +273,15 @@ contract MoonbirdsWrapper is
         bool value
     ) internal {
         IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+        (address bnftProxy, ) = IBNFTRegistry(bnftRegistry).getBNFTAddresses(address(this));
 
         require(delegate != address(0), "MoonbirdsWrapper: delegate is the zero address");
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             address tokenOwner = ERC721Upgradeable.ownerOf(tokenIds[i]);
+            if (bnftProxy == tokenOwner) {
+                tokenOwner = IERC721MetadataUpgradeable(bnftProxy).ownerOf(tokenIds[i]);
+            }
             require(tokenOwner == _msgSender(), "MoonbirdsWrapper: caller is not owner");
 
             address oldDelegate = _delegateAddresses[tokenIds[i]];

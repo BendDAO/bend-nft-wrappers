@@ -14,6 +14,7 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
     event DelegateCashForTokenV11Updated(address delegate, uint256 tokenId, bool value);
     event OwnershipDelegateEnabled(bool enabled);
     event AllDelegateCashRevoked();
+    event BNFTRegistryUpdated(address oldRegistry, address newRegistry);
 
     function underlyingToken() external view returns (IERC721MetadataUpgradeable);
 
@@ -24,6 +25,8 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
     function isMintEnabled() external view returns (bool);
 
     function isOwnershipDelegateEnabled() external view returns (bool);
+
+    function bnftRegistry() external view returns (address);
 
     function updateValidator(address validator) external;
 
