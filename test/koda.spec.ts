@@ -233,7 +233,9 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     await waitForTx(await contracts.kodaWrapper.connect(user0).setOwnershipDelegateEnabled(false));
 
     await expect(
-      contracts.kodaWrapper.connect(user0).setDelegateCashForToken(user0.address, [landIdWithKoda], true)
+      contracts.kodaWrapper
+        .connect(user0)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user0.address, [landIdWithKoda], true)
     ).to.be.revertedWith("ERC721Wrapper: ownership delegate disabled");
 
     await waitForTx(await contracts.kodaWrapper.connect(user0).setOwnershipDelegateEnabled(true));
@@ -243,7 +245,9 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     const user5 = env.accounts[5];
 
     await expect(
-      contracts.kodaWrapper.connect(user5).setDelegateCashForToken(user5.address, [landIdWithKoda], true)
+      contracts.kodaWrapper
+        .connect(user5)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user5.address, [landIdWithKoda], true)
     ).to.be.revertedWith("ERC721Wrapper: caller is not owner");
   });
 
@@ -252,7 +256,9 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     const user1 = env.accounts[1];
 
     await waitForTx(
-      await contracts.kodaWrapper.connect(user0).setDelegateCashForToken(user1.address, [landIdWithKoda], true)
+      await contracts.kodaWrapper
+        .connect(user0)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user1.address, [landIdWithKoda], true)
     );
     const hasDelegate1 = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
     expect(hasDelegate1).to.be.eq(true);
@@ -260,7 +266,9 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     expect(delegateAddr1).to.be.eq(user1.address);
 
     await waitForTx(
-      await contracts.kodaWrapper.connect(user0).setDelegateCashForToken(user1.address, [landIdWithKoda], false)
+      await contracts.kodaWrapper
+        .connect(user0)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user1.address, [landIdWithKoda], false)
     );
     const hasDelegate2 = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
     expect(hasDelegate2).to.be.eq(false);
@@ -274,15 +282,21 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     const user2 = env.accounts[2];
 
     await waitForTx(
-      await contracts.kodaWrapper.connect(user0).setDelegateCashForToken(user1.address, [landIdWithKoda], true)
+      await contracts.kodaWrapper
+        .connect(user0)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user1.address, [landIdWithKoda], true)
     );
 
     await expect(
-      contracts.kodaWrapper.connect(user0).setDelegateCashForToken(user2.address, [landIdWithKoda], true)
+      contracts.kodaWrapper
+        .connect(user0)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user2.address, [landIdWithKoda], true)
     ).to.be.revertedWith("ERC721Wrapper: delegate not same");
 
     await waitForTx(
-      await contracts.kodaWrapper.connect(user0).setDelegateCashForToken(user1.address, [landIdWithKoda], false)
+      await contracts.kodaWrapper
+        .connect(user0)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user1.address, [landIdWithKoda], false)
     );
   });
 
@@ -290,7 +304,9 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     const user0 = env.accounts[0];
 
     await waitForTx(
-      await contracts.kodaWrapper.connect(user0).setDelegateCashForToken(user0.address, [landIdWithKoda], true)
+      await contracts.kodaWrapper
+        .connect(user0)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user0.address, [landIdWithKoda], true)
     );
     const hasDelegate1 = await contracts.kodaWrapper.hasDelegateCashForToken(landIdWithKoda);
     expect(hasDelegate1).to.be.eq(true);
@@ -305,7 +321,9 @@ makeSuite("Koda", (contracts: Contracts, env: Env) => {
     const user0 = env.accounts[0];
 
     await waitForTx(
-      await contracts.kodaWrapper.connect(user0).setDelegateCashForToken(user0.address, [landIdWithKoda], true)
+      await contracts.kodaWrapper
+        .connect(user0)
+        ["setDelegateCashForToken(address,uint256[],bool)"](user0.address, [landIdWithKoda], true)
     );
 
     // burn

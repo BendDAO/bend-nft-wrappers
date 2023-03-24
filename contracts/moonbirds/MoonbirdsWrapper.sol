@@ -241,11 +241,28 @@ contract MoonbirdsWrapper is
         return _delegateAddresses[tokenId];
     }
 
+    function setDelegateCashForToken(uint256[] calldata tokenIds, bool value)
+        public
+        override
+        nonReentrant
+        whenOwnershipDelegateEnabled
+    {
+        _setDelegateCashForToken(_msgSender(), tokenIds, value);
+    }
+
     function setDelegateCashForToken(
         address delegate,
         uint256[] calldata tokenIds,
         bool value
     ) public override nonReentrant whenOwnershipDelegateEnabled {
+        _setDelegateCashForToken(delegate, tokenIds, value);
+    }
+
+    function _setDelegateCashForToken(
+        address delegate,
+        uint256[] calldata tokenIds,
+        bool value
+    ) internal {
         IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
 
         require(delegate != address(0), "MoonbirdsWrapper: delegate is the zero address");

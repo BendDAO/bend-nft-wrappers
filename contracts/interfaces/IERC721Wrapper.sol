@@ -43,6 +43,8 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
 
     function getDelegateCashForToken(uint256 tokenId) external view returns (address);
 
+    function setDelegateCashForToken(uint256[] calldata tokenIds, bool value) external;
+
     function setDelegateCashForToken(
         address delegate,
         uint256[] calldata tokenIds,
