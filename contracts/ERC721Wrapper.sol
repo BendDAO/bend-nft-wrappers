@@ -47,13 +47,14 @@ contract ERC721Wrapper is
     // Mapping from token to delegate cash
     mapping(uint256 => bool) private _hasDelegateCashes;
     bool public override isOwnershipDelegateEnabled;
+    mapping(uint256 => address) private _delegateAddresses;
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[39] private __gap;
+    uint256[38] private __gap;
     ////////////////////////////////////////////////////////////////////////////
 
     modifier whenFlashLoanEnabled() {
@@ -137,7 +138,7 @@ contract ERC721Wrapper is
         address owner = underlyingToken.ownerOf(tokenId);
         require(address(this) == owner, "ERC721Wrapper: invalid tokenId");
 
-        _removeDelegateCashForToken(owner, tokenId);
+        _removeDelegateCashForToken(tokenId);
 
         underlyingToken.safeTransferFrom(address(this), _msgSender(), tokenId);
         _burn(tokenId);
@@ -359,6 +360,7 @@ contract ERC721Wrapper is
         for (uint256 i = 0; i < totalTokens; i++) {
             uint256 tokenId = tokenByIndex(i);
             _hasDelegateCashes[tokenId] = false;
+            _delegateAddresses[tokenId] = address(0);
         }
 
         delegateContract.revokeAllDelegates();
@@ -377,34 +379,49 @@ contract ERC721Wrapper is
         return _hasDelegateCashes[tokenId];
     }
 
-    function setDelegateCashForToken(uint256[] calldata tokenIds, bool value)
-        public
-        override
-        nonReentrant
-        whenOwnershipDelegateEnabled
-    {
+    function getDelegateCashForToken(uint256 tokenId) public view override returns (address) {
+        return _delegateAddresses[tokenId];
+    }
+
+    function setDelegateCashForToken(
+        address delegate,
+        uint256[] calldata tokenIds,
+        bool value
+    ) public override nonReentrant whenOwnershipDelegateEnabled {
         IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+
+        require(delegate != address(0), "ERC721Wrapper: delegate is the zero address");
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             address tokenOwner = ERC721Upgradeable.ownerOf(tokenIds[i]);
             require(tokenOwner == _msgSender(), "ERC721Wrapper: caller is not owner");
 
-            delegateContract.delegateForToken(tokenOwner, address(underlyingToken), tokenIds[i], value);
+            address oldDelegate = _delegateAddresses[tokenIds[i]];
+            require((oldDelegate == address(0)) || (oldDelegate == delegate), "ERC721Wrapper: delegate not same");
+
+            delegateContract.delegateForToken(delegate, address(underlyingToken), tokenIds[i], value);
 
             _hasDelegateCashes[tokenIds[i]] = value;
+            if (value) {
+                _delegateAddresses[tokenIds[i]] = delegate;
+            } else {
+                _delegateAddresses[tokenIds[i]] = address(0);
+            }
 
-            emit DelegateCashForTokenUpdated(tokenIds[i], value);
+            emit DelegateCashForTokenV11Updated(delegate, tokenIds[i], value);
         }
     }
 
-    function _removeDelegateCashForToken(address tokenOwner, uint256 tokenId) internal {
+    function _removeDelegateCashForToken(uint256 tokenId) internal {
         if (_hasDelegateCashes[tokenId]) {
             IDelegationRegistry delegateContract = IDelegationRegistry(delegateCashContract);
+            address oldDelegate = _delegateAddresses[tokenId];
 
-            delegateContract.delegateForToken(tokenOwner, address(underlyingToken), tokenId, false);
+            delegateContract.delegateForToken(oldDelegate, address(underlyingToken), tokenId, false);
             _hasDelegateCashes[tokenId] = false;
+            _delegateAddresses[tokenId] = address(0);
 
-            emit DelegateCashForTokenUpdated(tokenId, false);
+            emit DelegateCashForTokenV11Updated(oldDelegate, tokenId, false);
         }
     }
 }

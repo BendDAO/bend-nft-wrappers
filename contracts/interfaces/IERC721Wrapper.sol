@@ -10,7 +10,8 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
     event FlashLoanEnabled(bool enabled);
     event MintEnabled(bool enabled);
     event DelegateCashUpdated(address oldDelegateCash, address newDelegateCash);
-    event DelegateCashForTokenUpdated(uint256 tokenId, bool value);
+    event DelegateCashForTokenUpdated(uint256 tokenId, bool value); // obsolete
+    event DelegateCashForTokenV11Updated(address delegate, uint256 tokenId, bool value);
     event OwnershipDelegateEnabled(bool enabled);
     event AllDelegateCashRevoked();
 
@@ -40,5 +41,11 @@ interface IERC721Wrapper is IERC721MetadataUpgradeable {
 
     function hasDelegateCashForToken(uint256 tokenId) external view returns (bool);
 
-    function setDelegateCashForToken(uint256[] calldata tokenIds, bool value) external;
+    function getDelegateCashForToken(uint256 tokenId) external view returns (address);
+
+    function setDelegateCashForToken(
+        address delegate,
+        uint256[] calldata tokenIds,
+        bool value
+    ) external;
 }

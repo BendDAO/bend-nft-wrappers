@@ -239,7 +239,7 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     await waitForTx(await contracts.moonbirdsWrapper.connect(user0).setOwnershipDelegateEnabled(false));
 
     await expect(
-      contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken([birdIdWithNesting], true)
+      contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken(user0.address, [birdIdWithNesting], true)
     ).to.be.revertedWith("MoonbirdsWrapper: ownership delegate disabled");
 
     await waitForTx(await contracts.moonbirdsWrapper.connect(user0).setOwnershipDelegateEnabled(true));
@@ -249,28 +249,55 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
     const user5 = env.accounts[5];
 
     await expect(
-      contracts.moonbirdsWrapper.connect(user5).setDelegateCashForToken([birdIdWithNesting], true)
+      contracts.moonbirdsWrapper.connect(user5).setDelegateCashForToken(user5.address, [birdIdWithNesting], true)
     ).to.be.revertedWith("MoonbirdsWrapper: caller is not owner");
   });
 
   it("User set delegate for token", async () => {
     const user0 = env.accounts[0];
-
-    await waitForTx(await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken([birdIdWithNesting], true));
-    const hasDelegate1 = await contracts.moonbirdsWrapper.hasDelegateCashForToken(birdIdWithNesting);
-    expect(hasDelegate1).to.be.eq(true);
+    const user1 = env.accounts[1];
 
     await waitForTx(
-      await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken([birdIdWithNesting], false)
+      await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken(user1.address, [birdIdWithNesting], true)
+    );
+    const hasDelegate1 = await contracts.moonbirdsWrapper.hasDelegateCashForToken(birdIdWithNesting);
+    expect(hasDelegate1).to.be.eq(true);
+    const delegateAddr1 = await contracts.moonbirdsWrapper.getDelegateCashForToken(birdIdWithNesting);
+    expect(delegateAddr1).to.be.eq(user1.address);
+
+    await waitForTx(
+      await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken(user1.address, [birdIdWithNesting], false)
     );
     const hasDelegate2 = await contracts.moonbirdsWrapper.hasDelegateCashForToken(birdIdWithNesting);
     expect(hasDelegate2).to.be.eq(false);
+    const delegateAddr2 = await contracts.moonbirdsWrapper.getDelegateCashForToken(birdIdWithNesting);
+    expect(delegateAddr2).to.be.eq(constants.AddressZero);
+  });
+
+  it("User change delegate for token (revert expected)", async () => {
+    const user0 = env.accounts[0];
+    const user1 = env.accounts[1];
+    const user2 = env.accounts[2];
+
+    await waitForTx(
+      await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken(user1.address, [birdIdWithNesting], true)
+    );
+
+    await expect(
+      contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken(user2.address, [birdIdWithNesting], true)
+    ).to.be.revertedWith("MoonbirdsWrapper: delegate not same");
+
+    await waitForTx(
+      await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken(user1.address, [birdIdWithNesting], false)
+    );
   });
 
   it("Admin revoke all delegate", async () => {
     const user0 = env.accounts[0];
 
-    await waitForTx(await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken([birdIdWithNesting], true));
+    await waitForTx(
+      await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken(user0.address, [birdIdWithNesting], true)
+    );
     const hasDelegate1 = await contracts.moonbirdsWrapper.hasDelegateCashForToken(birdIdWithNesting);
     expect(hasDelegate1).to.be.eq(true);
 
@@ -283,7 +310,9 @@ makeSuite("Moonbirds", (contracts: Contracts, env: Env) => {
   it("User successfully burn for bird with nesting", async () => {
     const user0 = env.accounts[0];
 
-    await waitForTx(await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken([birdIdWithNesting], true));
+    await waitForTx(
+      await contracts.moonbirdsWrapper.connect(user0).setDelegateCashForToken(user0.address, [birdIdWithNesting], true)
+    );
 
     // burn
     await waitForTx(await contracts.moonbirdsWrapper.connect(user0).burn(birdIdWithNesting));
