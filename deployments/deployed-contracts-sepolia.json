@@ -1,0 +1,14 @@
+{
+  "WrapperRegistry": {
+    "address": "0xE2434ad0BDE25e8124D9CDa97Dc739F73F14eff7",
+    "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
+  },
+  "KodaValidator": {
+    "address": "0xB926DD4A16c264F02986B575b546123D5D0bC607",
+    "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
+  },
+  "KodaWrapper": {
+    "address": "0x675B54905Ae457D9B7BcA72B58a7CC33AD3AB514",
+    "deployer": "0xafF5C36642385b6c7Aaf7585eC785aB2316b5db6"
+  }
+}
